@@ -1,0 +1,99 @@
+MM&MM - PROMPT DO TILESET DE PAREDE DE CAVERNA
+
+Criar um tileset de pixel art top-down para RPG de acao 2D. Tiles individuais
+com exatamente 16x16 pixels, sem anti-aliasing, sem gradientes suaves e sem
+interpolacao. Usar pixels duros e luz vindo do canto superior esquerdo.
+Entregar duas imagens: (1) atlas organizado em grade rotulada fora das celulas
+e (2) preview de corredor montado em 20 colunas por 12 linhas. Nao escrever
+texto dentro dos pixels dos tiles.
+
+IDENTIDADE E PALETA - 16 CORES HEX EXATAS
+
+Pedra e sombra:
+  #202A2F  junta profunda / sombra de contato
+  #35434A  rocha escura
+  #536168  rocha media
+  #718086  face iluminada
+  #AAB2AB  brilho de quina
+
+Minerios:
+  #94602F  cobre, ferro comum e contaminacao terrosa
+  #D29A4F  cobre claro
+  #277F84  cristal turquesa
+  #86DED0  brilho turquesa
+  #873741  rubi escuro
+  #EB7565  rubi claro
+
+Musgo e calor:
+  #3E6644  musgo escuro
+  #91AD61  musgo claro
+  #A84324  rocha aquecida
+  #F08031  fissura quente
+  #FFD078  brilho de brasa de 1 pixel
+
+ROCHA
+
+Parede de caverna antiga, nao alvenaria regular: silhuetas escalonadas de
+pedras grandes, medias e fragmentadas, com 2 ou 3 tons frios, planos frontais
+visiveis, quinas superiores esquerdas iluminadas, sombra forte nas quinas
+inferiores direitas, rachaduras quebradas e poucas marcas de picareta. A
+transicao para o chao tem uma borda de topo definida e sombra projetada curta
+sob a parede. Evitar blocos repetidos em grade, padrao de tijolos uniforme e
+veios em losango.
+
+Veios um pouco mais presentes, em aproximadamente 1 de cada 3 tiles de
+parede, sem formar uma grade regular. Usar manchas assimetricas de cristais
+partidos, pequenos grupos e veios diagonais. Cobre marrom, cristal turquesa e
+rubi vermelho devem ser identificaveis em 16x16; brilho de apenas 1 ou 2
+pixels. Aumentar a largura e altura dos veios em cerca de 10% sem suavizar
+as bordas.
+Musgo em aproximadamente 1 de cada 5 tiles: placas organicas mais visiveis,
+com contorno quebrado, uma ou duas gotas descendo do topo e pequenos pontos
+de umidade, nunca retangulos soltos ou cobertura uniforme. Incluir raras
+raizes finas, pedrinhas, teias nos cantos e marcas de picareta antigas.
+Ampliar as manchas de musgo em cerca de 10%, mantendo a silhueta irregular e
+os pixels nitidos.
+
+VARIANTES PROFUNDAS - ANDARES 7 A 9
+
+Preservar a mesma pedra e a paleta base. Acrescentar poucos veios laranja
+aquecidos, fissuras escuras com um ou dois pixels de luz laranja e pequenas
+marcas de contaminacao marrom-avermelhada. O calor aumenta gradualmente do
+andar 7 ao 9 sem transformar a parede toda em lava.
+
+GRADE DO ATLAS - 7 COLUNAS X 6 LINHAS
+
+Linha 1: STRAIGHT_01, STRAIGHT_02, STRAIGHT_03, STRAIGHT_04, STRAIGHT_05,
+         STRAIGHT_06, STRAIGHT_07
+Linha 2: STRAIGHT_08, STRAIGHT_H, STRAIGHT_V, OUTER_NW, OUTER_NE, OUTER_SW,
+         OUTER_SE
+Linha 3: INNER_NW, INNER_NE, INNER_SW, INNER_SE, END_N, END_E, END_S
+Linha 4: END_W, T_N, T_E, T_S, T_W, CROSS, ORE_COPPER
+Linha 5: ORE_TEAL, ORE_RUBY, ORE_COMMON, MOSS_DRIP, MOSS_PATCH,
+         WEB_CORNER_NW, TUNNEL_H
+Linha 6: TUNNEL_V, ROOTS, PICKAXE_MARKS, RUBBLE, DEEP_EMBER_VEIN,
+         DEEP_CONTAMINATION, DEEP_GLOW_CRACK
+
+As oito primeiras celulas sao variantes de parede reta sem repeticao imediata.
+Manter todas as celulas com bordas encaixaveis. Cantos, terminacoes e
+cruzamentos devem preservar a continuidade da rocha e da sombra ao serem
+montados como autotiles. Passagens de tunel abrem um recorte escuro na parede,
+sem parecer uma porta retangular de castelo.
+
+PREVIEW DO CORREDOR - 20 X 12 TILES
+
+# = parede, . = chao, c = veio de cobre, m = musgo, w = teia, t = cristal
+turquesa, r = rubi.
+
+####c###############
+#..................#
+#...m..............#
+#..................#
+#........w.........#
+#....##............#
+#....##............#
+#..................#
+#..................#
+#.....t............#
+#..................#
+########r###########
