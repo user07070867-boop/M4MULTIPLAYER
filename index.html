@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="PT-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MM&amp;MM</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body data-game-screen="menu">
+    <h1 id="pageHeading">Lobby</h1>
+    <div class="game-layout">
+    <div class="game-scene">
+        <canvas id="gameCanvas" width="1200" height="800" tabindex="0"
+            aria-label="Área da masmorra. Use WASD ou setas para mover, Shift para esquivar, espaço para atacar e G para conversar com personagens próximos."></canvas>
+        <section class="floor-event-notification" id="floorEventNotification"
+            aria-labelledby="floorEventNotificationTitle" aria-describedby="floorEventNotificationSummary"
+            role="status" aria-live="polite" hidden>
+            <h2 id="floorEventNotificationTitle"></h2>
+            <p id="floorEventNotificationSummary"></p>
+        </section>
+        <section class="start-screen" id="startScreen" role="dialog" aria-modal="true" aria-labelledby="startTitle">
+            <div class="start-card">
+                <p class="start-kicker">masmorras masmorras e mais masmorras · 20 andares</p>
+                <h2 id="startTitle">MM&amp;MM</h2>
+                <div class="start-divider" aria-hidden="true"></div>
+                <p class="start-description">
+                    Sob as ruínas, vinte andares guardam as minas da coroa, um castelo
+                    contaminado e a origem de um poder que nunca deveria ter sido despertado.
+                </p>
+                <p class="start-objective">
+                    <strong>Sua missão</strong>
+                    Derrote os inimigos para fazer surgir o portal e avançar de andar.
+                </p>
+                <details class="start-lore">
+                    <summary>Leia a crônica do veio</summary>
+                    <div>
+                        <p>
+                            Ao todo, vinte andares separam as antigas galerias da sala do trono. Antes
+                            de existir o castelo, a coroa abriu minas profundas em busca de um
+                            veio capaz de alimentar suas forjas. O minério trouxe riqueza, mas também
+                            calor, tremores e criaturas que se adaptaram às galerias. Quando a extração
+                            ameaçou ruir a fundação, os túneis foram abandonados às pressas.
+                        </p>
+                        <p>
+                            A corte ergueu um castelo sobre as minas e tentou controlar o veio com
+                            experimentos. A contaminação subiu: guardas de vitral despertaram, animais
+                            mudaram e antigos trabalhadores ficaram presos entre ordens e desabamentos.
+                            No observatório, o astrônomo que previu o colapso desapareceu; no trono,
+                            uma armadura continua cumprindo um juramento sem rei.
+                        </p>
+                        <p>
+                            Agora, uma nova expedição desce pelas galerias e sobe pelos salões em busca
+                            da origem do desastre. Goblins, aranhas, chefes e portais fazem parte da
+                            jornada atual. Comerciantes e sobreviventes ainda são ideias para futuras
+                            expansões, não personagens já encontrados durante a partida.
+                        </p>
+                    </div>
+                </details>
+                <div class="character-picker">
+                    <p class="character-picker-label" id="characterPickerLabel">Escolha seu personagem</p>
+                    <div class="character-tabs" role="tablist" aria-labelledby="characterPickerLabel">
+                        <button class="character-tab" id="manTab" type="button" role="tab"
+                            aria-selected="true" data-character="man">
+                            <span class="character-preview" data-character="man" aria-hidden="true"></span>
+                            Homem
+                        </button>
+                        <button class="character-tab" id="womanTab" type="button" role="tab"
+                            aria-selected="false" data-character="woman" tabindex="-1">
+                            <span class="character-preview" data-character="woman" aria-hidden="true"></span>
+                            Mulher
+                        </button>
+                    </div>
+                </div>
+                <div class="mode-picker" role="group" aria-label="Modo de jogo">
+                    <button class="mode-option" id="humanModeButton" type="button" aria-pressed="true">
+                        Jogar
+                    </button>
+                    <button class="mode-option" id="botModeButton" type="button" aria-pressed="false">
+                        Bot IA · concluir o andar 20
+                    </button>
+                    <button class="mode-option" id="devModeButton" type="button" aria-pressed="false">
+                        Dev · modo operador
+                    </button>
+                    <button class="mode-option" id="multiplayerModeButton" type="button" aria-pressed="false">
+                        Multiplayer online
+                    </button>
+                </div>
+                <section class="multiplayer-panel" id="multiplayerPanel" hidden
+                    aria-labelledby="multiplayerPanelTitle">
+                    <h3 id="multiplayerPanelTitle">Sala multiplayer</h3>
+                    <label for="multiplayerServerUrl">Servidor WebSocket</label>
+                    <input id="multiplayerServerUrl" type="url"
+                        value="ws://localhost:8080" autocomplete="url">
+                    <label for="multiplayerRoomCode">Sala</label>
+                    <input id="multiplayerRoomCode" type="text" value="masmorra"
+                        maxlength="24" pattern="[A-Za-z0-9_\-]+" autocomplete="off">
+                    <button id="multiplayerConnectButton" type="button">Conectar à sala</button>
+                    <span id="multiplayerStatus" role="status" aria-live="polite">
+                        Desconectado
+                    </span>
+                </section>
+                <button class="bestiary-open-button" id="bestiaryOpenButton" type="button"
+                    aria-controls="bestiaryPanel">Monstruário</button>
+                <label class="reduced-effects-control" for="reducedEffectsToggle">
+                    <input id="reducedEffectsToggle" type="checkbox">
+                    Reduzir efeitos e movimento
+                </label>
+                <div class="bot-memory-actions" id="botMemoryActions" role="group"
+                    aria-label="Portabilidade da memória do Bot IA" hidden>
+                    <button id="exportBotMemoryButton" type="button">Exportar memória</button>
+                    <button id="importBotMemoryButton" type="button">Importar memória</button>
+                    <input id="importBotMemoryFile" type="file" accept="application/json,.json" hidden>
+                    <span id="botMemoryActionStatus" role="status" aria-live="polite"></span>
+                </div>
+                <p class="start-controls">
+                    <span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> ou setas para mover</span>
+                    <span><kbd>Shift</kbd> + direção para esquivar</span>
+                    <span><kbd>Espaço</kbd> para atacar</span>
+                    <span><kbd>1</kbd> inventário · <kbd>Z</kbd> alternar · <kbd>F</kbd> golpe especial</span>
+                    <span><kbd>G</kbd> interagir com personagens próximos</span>
+                </p>
+                <details class="start-details">
+                    <summary>Ver todos os controles e mecânicas</summary>
+                    <p>
+                        Durante o dash, <kbd>Espaço</kbd> causa dano dobrado. Compre na loja uma melhoria
+                        para aumentar a distância do dash. Uma esquiva automática abre uma breve janela de
+                        contra-ataque. Dano corpo a corpo carrega as habilidades especiais; use <kbd>Z</kbd>
+                        para selecionar o golpe da espada; <kbd>F</kbd> executa esse golpe quando carregado.
+                        Com o Pergaminho da Conquista no inventário, dano corpo a corpo evolui a aura
+                        automaticamente, sem ativação.
+                    </p>
+                    <p>
+                        Use <kbd>R</kbd> para a lança, <kbd>Q</kbd> para poções, <kbd>E</kbd> para erguer
+                        o escudo e <kbd>Tab</kbd> para abrir a loja. O Pergaminho da perdição é ativado
+                        com <kbd>P</kbd>; enquanto o Susano estiver ativo, <kbd>R</kbd> rouba vida e
+                        <kbd>L</kbd> faz inimigos próximos lutarem entre si. Compre o arco na loja, mire
+                        com o mouse e clique para atirar. Andares limpos dão moedas extras.
+                    </p>
+                    <p>
+                        No modo <strong>Dev</strong>, você fica invulnerável, atravessa paredes e recebe
+                        todos os materiais deixados por criaturas, moedas, poções, flechas, pergaminhos e
+                        equipamento. O inventário abre no início para facilitar a inspeção. Use o painel
+                        lateral para editar paredes, mover mobs e itens, adicionar mobs e navegar pelos
+                        20 andares.
+                    </p>
+                    <p>
+                        Chefes anteriores ao final têm 50% a mais de vida e velocidade e ampliam o alcance
+                        de percepção. O dragão do andar 5 causa dano básico, sem o bônus de dano dos chefes;
+                        o chefe final usa 1,9 vez o multiplicador de chefe. O nome e a vida restante aparecem
+                        em texto, sem barras ao redor.
+                        Depois de uma sequência de três ataques, ficam vulneráveis por um breve momento
+                        e recebem mais dano.
+                        Fora dessa abertura, podem bloquear 25% dos golpes de espada e lança e 50% das flechas.
+                        Inimigos podem usar armadura e escudo. A partir do andar 10, trolls causam dano
+                        de veneno e fogem quando você está longe; ogros anunciam ataques em área.
+                        Aranhas de fuligem aparecem nas minas quentes; no castelo há cães de fuligem e
+                        sentinelas de vitral com investidas e disparos anunciados. A Matriarca do Tear
+                        surge no andar 8 e o Guardião do Trono pode substituir o chefe do andar 20.
+                        Há também uma chance de inimigos começarem uma briga
+                        entre si. No modo Bot IA, ele aprende durante a partida e tenta concluir os
+                        20 andares.
+                    </p>
+                </details>
+                <button class="start-button" id="startButton" type="button">Iniciar aventura</button>
+            </div>
+        </section>
+        <section class="bestiary-panel" id="bestiaryPanel" role="dialog" aria-modal="true"
+            aria-labelledby="bestiaryTitle" hidden>
+            <div class="bestiary-card">
+                <header class="bestiary-header">
+                    <div>
+                        <p class="start-kicker">Arquivo da masmorra</p>
+                        <h2 id="bestiaryTitle">Monstruário</h2>
+                    </div>
+                    <button class="shop-close" id="bestiaryCloseButton" type="button">Fechar (Esc)</button>
+                </header>
+                <div class="bestiary-content" id="bestiaryContent"></div>
+            </div>
+        </section>
+        <section class="blacksmith-panel" id="blacksmithPanel" role="dialog" aria-modal="true"
+            aria-labelledby="blacksmithTitle" hidden>
+            <div class="blacksmith-card">
+                <header class="blacksmith-header">
+                    <div class="blacksmith-identity">
+                        <span class="blacksmith-emblem" aria-hidden="true">⚒</span>
+                        <div>
+                            <p class="start-kicker">Forja itinerante · acesso pela tecla G</p>
+                            <h2 id="blacksmithTitle">Oren, ferreiro</h2>
+                        </div>
+                    </div>
+                    <button class="shop-close" type="button" data-blacksmith-action="exit">Sair (Esc)</button>
+                </header>
+                <p class="blacksmith-greeting" data-blacksmith-greeting role="status" aria-live="polite"></p>
+                <nav class="blacksmith-menu" data-blacksmith-stage="menu" aria-label="Opções do ferreiro">
+                    <p>O que vai ser? Não tenho o dia todo.</p>
+                    <button type="button" data-blacksmith-action="forge">Forjar</button>
+                    <button type="button" data-blacksmith-action="talk">Conversar</button>
+                    <button type="button" data-blacksmith-action="exit">Sair</button>
+                    <p class="blacksmith-talk" data-blacksmith-talk role="status" aria-live="polite" hidden></p>
+                </nav>
+                <section class="blacksmith-forge" data-blacksmith-stage="forge" hidden>
+                    <div class="blacksmith-forge-heading">
+                        <div><span class="bestiary-eyebrow">MATERIAIS DO INVENTÁRIO</span><h3>Preparar combinação</h3></div>
+                        <button type="button" data-blacksmith-action="back">Voltar</button>
+                    </div>
+                    <div class="blacksmith-slots">
+                        <label class="blacksmith-slot">
+                            <span>Ingrediente A</span>
+                            <select data-blacksmith-material="a" aria-label="Ingrediente A">
+                                <option value="">Escolha um material</option>
+                            </select>
+                            <span>Quantidade</span>
+                            <input data-blacksmith-quantity="a" type="number" min="1" value="1" inputmode="numeric">
+                        </label>
+                        <span class="blacksmith-combine-symbol" aria-hidden="true">＋</span>
+                        <label class="blacksmith-slot">
+                            <span>Ingrediente B <small>(vazio para receita Igual)</small></span>
+                            <select data-blacksmith-material="b" aria-label="Ingrediente B">
+                                <option value="">Vazio</option>
+                            </select>
+                            <span>Quantidade</span>
+                            <input data-blacksmith-quantity="b" type="number" min="0" value="0" inputmode="numeric">
+                        </label>
+                    </div>
+                    <section class="blacksmith-result" aria-label="Prévia do item criado">
+                        <span class="bestiary-eyebrow">RESULTADO</span>
+                        <div class="blacksmith-result-preview" data-blacksmith-result>
+                            <span class="blacksmith-result-placeholder">Selecione os ingredientes</span>
+                        </div>
+                        <p class="blacksmith-feedback" data-blacksmith-feedback role="status" aria-live="polite">
+                            Escolha materiais para verificar as receitas.
+                        </p>
+                    </section>
+                    <button class="blacksmith-hammer-button" type="button" data-blacksmith-action="confirm-forge" disabled>
+                        Forjar item
+                    </button>
+                </section>
+                <div class="blacksmith-toast" data-blacksmith-toast role="status" aria-live="polite" hidden></div>
+            </div>
+        </section>
+        <aside class="player-hud" aria-label="Status do personagem">
+            <div class="xp-status">
+                <span id="levelText">Nível 1</span>
+                <span id="xpText">0 / 100 XP</span>
+            </div>
+            <div class="xp-track" id="xpTrack" role="progressbar" aria-label="Experiência do personagem"
+                aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                <div class="xp-fill" id="xpFill"></div>
+            </div>
+            <section class="level-upgrade-panel" id="levelUpgradePanel"
+                aria-label="Investir pontos de nível" hidden>
+                <strong id="skillPointText" role="status" aria-live="polite"></strong>
+                <span class="level-upgrade-hint">Escolha um atributo para melhorar:</span>
+                <div class="level-upgrade-actions">
+                    <button id="investHealthButton" type="button">Vida <small>+10 vida máxima</small></button>
+                    <button id="investMeleeButton" type="button">Corpo a corpo <small>+2 dano</small></button>
+                    <button id="investAimButton" type="button">Mira <small>+2 dano à distância</small></button>
+                </div>
+            </section>
+            <div class="health-status">
+                <span>Vida</span>
+                <span id="healthText">100 / 100</span>
+            </div>
+            <div class="health-track" id="healthTrack" role="progressbar" aria-label="Vida do personagem"
+                aria-valuemin="0" aria-valuemax="100" aria-valuenow="100">
+                <div class="health-fill" id="healthFill"></div>
+            </div>
+            <section class="special-abilities" aria-label="Habilidades especiais">
+                <div class="special-abilities-heading">
+                    <span>Habilidades</span>
+                    <span><kbd>Z</kbd> alternar · <kbd>F</kbd> golpe</span>
+                </div>
+                <div class="special-ability" data-special-ability="sword">
+                    <button class="special-ability-select" id="selectSwordSpecial" type="button"
+                        aria-pressed="true" data-special-select="sword">Golpe da espada</button>
+                    <div class="special-ability-track" id="swordSpecialTrack" role="progressbar"
+                        aria-label="Carga do golpe da espada" aria-valuemin="0" aria-valuemax="100"
+                        aria-valuenow="0">
+                        <div class="special-ability-fill"></div>
+                    </div>
+                    <span class="special-ability-detail" id="swordSpecialDetail">0% · 2× dano · raio 4 quadrados</span>
+                </div>
+                <div class="special-ability" data-special-ability="conquest">
+                    <button class="special-ability-select" id="selectConquestSpecial" type="button"
+                        aria-pressed="false" data-special-select="conquest">Pergaminho da Conquista</button>
+                    <div class="special-ability-track" id="conquestSpecialTrack" role="progressbar"
+                        aria-label="Progresso da aura da Conquista" aria-valuemin="0" aria-valuemax="100"
+                        aria-valuenow="0">
+                        <div class="special-ability-fill"></div>
+                    </div>
+                    <span class="special-ability-detail" id="conquestSpecialDetail">Sem aura · precisa do pergaminho</span>
+                </div>
+                <span class="special-abilities-status" id="specialAbilitiesStatus" role="status"
+                    aria-live="polite">Dano corpo a corpo carrega o golpe e evolui a aura</span>
+                <button class="special-ability-activate" id="activateSpecialAbilityButton" type="button" disabled>
+                    Golpear · F
+                </button>
+            </section>
+        </aside>
+        <aside class="inventory" id="inventoryPanel" aria-label="Inventário" hidden>
+            <header class="inventory-header">
+                <h2 class="inventory-title">Inventário</h2>
+                <button class="inventory-close" id="inventoryCloseButton" type="button"
+                    aria-label="Fechar inventário. Pressione 1." title="Fechar inventário (1)">×</button>
+            </header>
+            <div class="ore-purse" aria-label="Moedas de minério">
+                <span class="ore-currency" data-ore="copper" title="Moedas de cobre" aria-label="Moedas de cobre">
+                    <span class="ore-currency-icon" aria-hidden="true"></span>
+                    <span id="copperCoinCount">0</span>
+                </span>
+                <span class="ore-currency" data-ore="silver" title="Moedas de prata" aria-label="Moedas de prata">
+                    <span class="ore-currency-icon" aria-hidden="true"></span>
+                    <span id="silverCoinCount">0</span>
+                </span>
+                <span class="ore-currency" data-ore="gold" title="Moedas de ouro" aria-label="Moedas de ouro">
+                    <span class="ore-currency-icon" aria-hidden="true"></span>
+                    <span id="goldCoinCount">0</span>
+                </span>
+                <span class="ore-currency" data-ore="ruby" title="Moedas de rubi" aria-label="Moedas de rubi">
+                    <span class="ore-currency-icon" aria-hidden="true"></span>
+                    <span id="rubyCoinCount">0</span>
+                </span>
+                <span class="ore-currency" data-ore="emerald" title="Moedas de esmeralda" aria-label="Moedas de esmeralda">
+                    <span class="ore-currency-icon" aria-hidden="true"></span>
+                    <span id="emeraldCoinCount">0</span>
+                </span>
+            </div>
+            <div class="inventory-items" id="inventoryItems" aria-label="Itens e espaços livres">
+                <button class="inventory-slot" id="swordSlot" type="button" aria-pressed="true"
+                    aria-label="Espada equipada, causa 10 de dano" title="Espada">
+                    <img class="inventory-icon equipment-icon sword-inventory-icon"
+                        src="assets/inventory-items/sword.png" alt="" aria-hidden="true">
+                    <span>
+                        <span class="inventory-item-name">Espada</span>
+                        <span class="inventory-item-detail">10 de dano</span>
+                    </span>
+                    <span class="inventory-count" aria-hidden="true">1</span>
+                </button>
+                <button class="inventory-slot equipment-slot" id="spearSlot" type="button" hidden
+                    aria-label="Lança. Pressione R para estocar a média distância." title="Lança (R)">
+                    <img class="inventory-icon equipment-icon spear-inventory-icon"
+                        src="assets/inventory-items/spear.png" alt="" aria-hidden="true">
+                    <span>
+                        <span class="inventory-item-name">Lança (R)</span>
+                        <span class="inventory-item-detail">8 de dano base · alcance médio</span>
+                    </span>
+                    <span class="inventory-count" aria-hidden="true">1</span>
+                </button>
+                <button class="inventory-slot equipment-slot" id="bowSlot" type="button" hidden
+                    aria-label="Arco comprado. Mire com o mouse e clique para atirar." title="Arco">
+                    <img class="inventory-icon equipment-icon bow-inventory-icon"
+                        src="assets/inventory-items/bow.png" alt="" aria-hidden="true">
+                    <span>
+                        <span class="inventory-item-name">Arco</span>
+                        <span class="inventory-item-detail">Mouse · clique para atirar</span>
+                    </span>
+                    <span class="inventory-count" id="arrowCount" aria-hidden="true">0</span>
+                </button>
+                <button class="inventory-slot potion-slot" id="potionSlot" type="button" disabled
+                    aria-label="Poção de cura: 0 disponíveis. Pressione Q para usar." title="Poção (Q)">
+                    <img class="inventory-icon equipment-icon potion-inventory-icon"
+                        src="assets/inventory-items/potion-common.png" alt="" aria-hidden="true">
+                    <span>
+                        <span class="inventory-item-name">Poção (Q)</span>
+                        <span class="inventory-item-detail">0 disponíveis</span>
+                    </span>
+                    <span class="inventory-count" id="potionCount" aria-hidden="true">0</span>
+                </button>
+                <button class="inventory-slot equipment-slot" id="shieldSlot" type="button" hidden
+                    aria-pressed="false" aria-label="Escudo. Pressione E para erguer." title="Escudo (E)">
+                    <img class="inventory-icon equipment-icon shield-inventory-icon"
+                        src="assets/inventory-items/shield.png" alt="" aria-hidden="true">
+                    <span>
+                        <span class="inventory-item-name">Escudo (E)</span>
+                        <span class="inventory-item-detail">Não comprado</span>
+                    </span>
+                    <span class="inventory-count" aria-hidden="true">1</span>
+                </button>
+                <button class="inventory-slot equipment-slot" id="armorSlot" type="button" hidden
+                    aria-label="Armadura passiva" title="Armadura">
+                    <img class="inventory-icon equipment-icon armor-inventory-icon"
+                        src="assets/inventory-items/armor.png" alt="" aria-hidden="true">
+                    <span>
+                        <span class="inventory-item-name">Armadura</span>
+                        <span class="inventory-item-detail">Não comprada</span>
+                    </span>
+                    <span class="inventory-count" aria-hidden="true">1</span>
+                </button>
+                <button class="inventory-scroll-slot" id="scrollSlot-conquista" type="button" hidden>
+                    <img src="assets/scroll-conquista.png" alt="" aria-hidden="true">
+                    <span class="inventory-item-name">Conquista</span>
+                    <span class="inventory-count" id="scrollCount-conquista">0</span>
+                </button>
+                <button class="inventory-scroll-slot" id="scrollSlot-poder" type="button" hidden>
+                    <img src="assets/scroll-poder.png" alt="" aria-hidden="true">
+                    <span class="inventory-item-name">Poder</span>
+                    <span class="inventory-count" id="scrollCount-poder">0</span>
+                </button>
+                <button class="inventory-scroll-slot" id="scrollSlot-alma" type="button" hidden>
+                    <img src="assets/scroll-alma.png" alt="" aria-hidden="true">
+                    <span class="inventory-item-name">Alma</span>
+                    <span class="inventory-count" id="scrollCount-alma">0</span>
+                </button>
+                <button class="inventory-scroll-slot" id="scrollSlot-sagrado" type="button" hidden>
+                    <img src="assets/scroll-sagrado.png" alt="" aria-hidden="true">
+                    <span class="inventory-item-name">Sagrado</span>
+                    <span class="inventory-count" id="scrollCount-sagrado">0</span>
+                </button>
+                <button class="inventory-scroll-slot" id="scrollSlot-perdicao" type="button" hidden>
+                    <img src="assets/scroll-perdicao.png" alt="" aria-hidden="true">
+                    <span class="inventory-item-name">Perdição</span>
+                    <span class="inventory-count" id="scrollCount-perdicao">0</span>
+                </button>
+                <section class="material-inventory" id="materialInventory" aria-label="Materiais coletados" hidden>
+                    <h3>Materiais</h3>
+                    <div class="material-inventory-items" id="materialInventoryItems"></div>
+                </section>
+                <section class="material-inventory crafting-inventory" id="craftingInventory"
+                    aria-label="Receitas e itens fabricáveis">
+                    <h3>Itens fabricáveis</h3>
+                    <div class="material-inventory-items" id="craftingRecipeList"></div>
+                </section>
+            </div>
+            <section class="item-information" id="inventoryItemInformation" aria-live="polite">
+                <strong id="inventoryItemTitle">Detalhes do item</strong>
+                <span id="inventoryItemDescription">Clique em um item para ver seus efeitos e controles.</span>
+            </section>
+            <div class="inventory-tooltip" id="inventoryTooltip" role="tooltip" hidden></div>
+            <div class="inventory-footer">
+                <div class="inventory-durability">
+                    <div class="equipment-durability" id="shieldDurabilityTrack" role="progressbar"
+                        aria-label="Durabilidade do escudo" aria-valuemin="0" aria-valuemax="0"
+                        aria-valuenow="0" hidden>
+                        <div class="equipment-durability-track">
+                            <div class="equipment-durability-fill" id="shieldDurabilityFill"></div>
+                        </div>
+                        <span id="shieldDurabilityText">0 / 0</span>
+                    </div>
+                    <div class="equipment-durability" id="armorDurabilityTrack" role="progressbar"
+                        aria-label="Durabilidade da armadura" aria-valuemin="0" aria-valuemax="0"
+                        aria-valuenow="0" hidden>
+                        <div class="equipment-durability-track">
+                            <div class="equipment-durability-fill" id="armorDurabilityFill"></div>
+                        </div>
+                        <span id="armorDurabilityText">0 / 0</span>
+                    </div>
+                </div>
+                <p class="scroll-inventory visually-hidden" id="scrollInventory">Pergaminhos: nenhum</p>
+                <button class="scroll-gallery-open" id="scrollGalleryOpenButton" type="button"
+                    aria-label="Ver pergaminhos">Ver pergaminhos</button>
+            </div>
+        </aside>
+        <section class="shop-panel scroll-gallery-panel" id="scrollGalleryPanel" role="dialog"
+            aria-modal="true" aria-labelledby="scrollGalleryTitle" hidden>
+            <div class="shop-card scroll-gallery-card">
+                <div class="shop-header">
+                    <h2 class="shop-title" id="scrollGalleryTitle">Pergaminhos da masmorra</h2>
+                    <button class="shop-close" id="scrollGalleryCloseButton" type="button">Fechar (Esc)</button>
+                </div>
+                <p class="shop-currency">O Pergaminho da Conquista permanece no inventário e evolui automaticamente com dano corpo a corpo; <kbd>P</kbd> ativa o Pergaminho da perdição:</p>
+                <div class="scroll-gallery-grid">
+                    <article class="scroll-gallery-item">
+                        <img src="assets/scroll-conquista.png" alt="Ilustração do Pergaminho da conquista">
+                        <h3>Pergaminho da conquista</h3>
+                    </article>
+                    <article class="scroll-gallery-item">
+                        <img src="assets/scroll-poder.png" alt="Ilustração do Pergaminho do poder">
+                        <h3>Pergaminho do poder</h3>
+                    </article>
+                    <article class="scroll-gallery-item">
+                        <img src="assets/scroll-alma.png" alt="Ilustração do Pergaminho da alma">
+                        <h3>Pergaminho da alma</h3>
+                    </article>
+                    <article class="scroll-gallery-item">
+                        <img src="assets/scroll-sagrado.png" alt="Ilustração do Pergaminho sagrado">
+                        <h3>Pergaminho sagrado</h3>
+                    </article>
+                    <article class="scroll-gallery-item">
+                        <img src="assets/scroll-perdicao.png" alt="Ilustração do Pergaminho da perdição">
+                        <h3>Pergaminho da perdição</h3>
+                        <p>Invoca um Susano roxo até sua morte: inimigos próximos fogem e sofrem 5 de dano por segundo. Um golpe derrota inimigos comuns; chefes resistem. Use R para roubar vida e recuperar metade do dano, ou L para fazê-los lutar entre si por 5 segundos.</p>
+                    </article>
+                </div>
+            </div>
+        </section>
+        <section class="shop-panel" id="shopPanel" role="dialog" aria-modal="true"
+            aria-labelledby="shopTitle" hidden>
+            <div class="shop-card">
+                <div class="shop-header">
+                    <h2 class="shop-title" id="shopTitle">Loja do ferreiro</h2>
+                    <button class="shop-close" id="shopCloseButton" type="button">Fechar (Tab)</button>
+                </div>
+                <p class="shop-currency">Saldo equivalente em moedas de cobre: <span id="shopCurrencyCount">0</span></p>
+                <p class="shop-currency">Câmbio: 1 prata = 2 cobre · 1 ouro = 5 pratas · 1 rubi = 10 ouros · 1 esmeralda = 15 rubis</p>
+                <p class="shop-currency" id="shopEquipmentStatus">Dano: 10 · Defesa: 0</p>
+                <label class="shop-available-filter">
+                    <input id="shopAvailableOnlyFilter" type="checkbox">
+                    Mostrar só itens que posso comprar
+                </label>
+                <div class="shop-upgrades">
+                    <button class="shop-upgrade" id="upgradeSwordButton" type="button">
+                        <span class="shop-upgrade-heading">
+                            <span class="shop-upgrade-name">Melhorar espada</span>
+                            <span class="shop-upgrade-detail" data-upgrade-level>Nível 0</span>
+                        </span>
+                        <span class="shop-upgrade-detail" data-upgrade-effect>+2 de dano</span>
+                        <span class="shop-upgrade-level-requirement" data-minimum-level>Nível exigido</span>
+                        <span class="shop-upgrade-cost" data-upgrade-cost>4 moedas de cobre</span>
+                    </button>
+                    <button class="shop-upgrade" id="upgradeShieldButton" type="button">
+                        <span class="shop-upgrade-heading">
+                            <span class="shop-upgrade-name">Melhorar escudo</span>
+                            <span class="shop-upgrade-detail" data-upgrade-level>Nível 0</span>
+                        </span>
+                        <span class="shop-upgrade-detail" data-upgrade-effect>+2 de defesa</span>
+                        <span class="shop-upgrade-level-requirement" data-minimum-level>Nível exigido</span>
+                        <span class="shop-upgrade-cost" data-upgrade-cost>3 moedas de cobre</span>
+                    </button>
+                    <button class="shop-upgrade" id="upgradeArmorButton" type="button">
+                        <span class="shop-upgrade-heading">
+                            <span class="shop-upgrade-name">Melhorar armadura</span>
+                            <span class="shop-upgrade-detail" data-upgrade-level>Nível 0</span>
+                        </span>
+                        <span class="shop-upgrade-detail" data-upgrade-effect>+3 de defesa</span>
+                        <span class="shop-upgrade-level-requirement" data-minimum-level>Nível exigido</span>
+                        <span class="shop-upgrade-cost" data-upgrade-cost>5 moedas de cobre</span>
+                    </button>
+                    <button class="shop-upgrade" id="buySpearButton" type="button">
+                        <span class="shop-upgrade-heading">
+                            <span class="shop-upgrade-name">Lança de aço</span>
+                            <span class="shop-upgrade-detail" data-upgrade-level>Não comprada</span>
+                        </span>
+                        <span class="shop-upgrade-detail" data-upgrade-effect>Estocada de alcance médio · 8 de dano base</span>
+                        <span class="shop-upgrade-level-requirement" data-minimum-level>Nível exigido</span>
+                        <span class="shop-upgrade-cost" data-upgrade-cost>8 moedas de cobre</span>
+                    </button>
+                    <button class="shop-upgrade bow-upgrade" id="buyBowButton" type="button">
+                        <span class="bow-shop-art" aria-hidden="true">
+                            <svg viewBox="0 0 48 48" shape-rendering="crispEdges">
+                                <path d="M9 4h4v5h5v5h5v5h4v10h-4v5h-5v5h-5v5H9v-5h5v-5h5v-5h4V19h-4v-5h-5V9H9z"
+                                    fill="#40251b"/>
+                                <path d="M11 6h2v5h5v5h5v4h2v8h-2v4h-5v5h-5v5h-2v-5h5v-5h5v-5h2v-8h-2v-4h-5v-5h-5z"
+                                    fill="#b8733f"/>
+                                <path d="M12 7h1v4h5v5h5v4h1v8h-1v4h-5v5h-5v4h-1v-5h5v-5h5v-4h1v-6h-1v-4h-5v-5h-5z"
+                                    fill="#e3b56f"/>
+                                <path d="M6 23h35v2H6z" fill="#b9c6c2"/>
+                                <path d="M38 20h5v2h-5zM38 26h5v2h-5z" fill="#748a89"/>
+                                <path d="M4 20h3v2H4zM4 26h3v2H4z" fill="#643e32"/>
+                                <path d="M12 22h2v4h-2z" fill="#633727"/>
+                                <path d="M14 23h2v2h-2z" fill="#f4d58b"/>
+                            </svg>
+                        </span>
+                        <span class="bow-shop-copy">
+                            <span class="shop-upgrade-heading">
+                                <span class="shop-upgrade-name">Arco de teixo entalhado</span>
+                                <span class="shop-upgrade-detail" data-upgrade-level>Não comprado</span>
+                            </span>
+                            <span class="shop-upgrade-detail" data-upgrade-effect>Arco recurvo reforçado · flechas rápidas de longo alcance · 12 de dano</span>
+                            <span class="shop-upgrade-level-requirement" data-minimum-level>Nível exigido</span>
+                            <span class="shop-upgrade-cost" data-upgrade-cost>12 moedas de cobre</span>
+                        </span>
+                    </button>
+                    <button class="shop-upgrade" id="buyArrowsButton" type="button">
+                        <span class="shop-upgrade-heading">
+                            <span class="shop-upgrade-name">Pacote de flechas</span>
+                            <span class="shop-upgrade-detail" data-upgrade-level>Consumível</span>
+                        </span>
+                        <span class="shop-upgrade-detail" data-upgrade-effect>Adiciona até 12 flechas à aljava</span>
+                        <span class="shop-upgrade-level-requirement" data-minimum-level>Nível exigido</span>
+                        <span class="shop-upgrade-cost" data-upgrade-cost>8 moedas de cobre</span>
+                    </button>
+                    <button class="shop-upgrade" id="buyDashUpgradeButton" type="button">
+                        <span class="shop-upgrade-heading">
+                            <span class="shop-upgrade-name">Melhorar dash</span>
+                            <span class="shop-upgrade-detail" data-upgrade-level>Não comprada</span>
+                        </span>
+                        <span class="shop-upgrade-detail" data-upgrade-effect>Aumenta a distância do dash em 50%</span>
+                        <span class="shop-upgrade-level-requirement" data-minimum-level>Nível exigido</span>
+                        <span class="shop-upgrade-cost" data-upgrade-cost>10 moedas de cobre</span>
+                    </button>
+                    <button class="shop-upgrade" id="buyPotionButton" type="button">
+                        <span class="shop-upgrade-heading">
+                            <span class="shop-upgrade-name">Poção de cura comum</span>
+                            <span class="shop-upgrade-detail" data-upgrade-level>Consumível</span>
+                        </span>
+                        <span class="shop-upgrade-detail" data-upgrade-effect>Recupera até 35 pontos de vida</span>
+                        <span class="shop-upgrade-level-requirement" data-minimum-level>Nível exigido</span>
+                        <span class="shop-upgrade-cost" data-upgrade-cost>12 moedas de cobre</span>
+                    </button>
+                </div>
+                <section class="item-information shop-item-information" id="shopItemInformation" aria-live="polite">
+                    <strong id="shopItemTitle">Detalhes da mercadoria</strong>
+                    <span id="shopItemDescription">Selecione um produto para consultar efeitos, preço e disponibilidade.</span>
+                    <button class="shop-purchase-button" id="shopItemPurchaseButton" type="button" hidden>
+                        Comprar item selecionado
+                    </button>
+                </section>
+            </div>
+        </section>
+        <section class="bot-victory-letter" id="botVictoryLetter" role="dialog"
+            aria-modal="true" aria-labelledby="botVictoryLetterTitle" hidden>
+            <div class="bot-victory-letter-card">
+                <p class="bot-victory-letter-kicker">Correspondência da masmorra</p>
+                <h2 id="botVictoryLetterTitle">Carta de conclusão</h2>
+                <pre id="botVictoryLetterBody"></pre>
+                <div class="bot-victory-letter-actions">
+                    <button id="botVictoryLetterCopy" type="button">Copiar carta</button>
+                    <button id="botVictoryLetterDownload" type="button">Baixar carta</button>
+                    <button id="botVictoryLetterClose" type="button">Fechar</button>
+                </div>
+                <p id="botVictoryLetterStatus" role="status" aria-live="polite"></p>
+            </div>
+        </section>
+    </div>
+    <aside class="game-hud" id="gameHud" aria-label="Diário da masmorra" aria-live="polite" hidden>
+        <span class="game-hud-title">Diário da masmorra</span>
+        <span class="floor-status" id="floorText">Andar 1</span>
+        <span class="game-hud-status">
+            <span class="game-hud-marker" aria-hidden="true"></span>
+            <span id="questText">Derrote inimigos (0/8)</span>
+        </span>
+        <button class="bestiary-open-button" id="bestiaryInGameOpenButton" type="button"
+            aria-controls="bestiaryPanel">Bestiário descoberto</button>
+        <span id="bestiaryDiscoveryStatus" class="bestiary-discovery-status" role="status"
+            aria-live="polite" hidden></span>
+        <span class="bot-mode-status" id="botModeStatus" aria-live="polite" hidden></span>
+        <span class="bot-review-status" id="botReviewStatus" aria-live="polite" hidden></span>
+        <span class="bot-advice-status" id="botAdviceStatus" aria-live="polite" hidden></span>
+        <span class="bot-memory-status" id="botMemoryStatus" aria-live="polite" hidden></span>
+        <section class="dev-tools" id="devToolsPanel" aria-label="Ferramentas do modo Dev" hidden>
+            <h2>Modo Dev</h2>
+            <p>Invulnerável · atravessa paredes · itens grátis</p>
+            <div class="dev-tools-grid" role="group" aria-label="Ferramenta de edição">
+                <button type="button" data-dev-tool="wall" aria-pressed="true">Pintar parede</button>
+                <button type="button" data-dev-tool="move-wall" aria-pressed="false">Mover parede</button>
+                <button type="button" data-dev-tool="move-entity" aria-pressed="false">Mover mob/item</button>
+                <button type="button" data-dev-tool="add-enemy" aria-pressed="false">Adicionar mob</button>
+            </div>
+            <label for="devCreatureSelect">Criatura para adicionar</label>
+            <select id="devCreatureSelect" aria-label="Criatura para adicionar"></select>
+            <p id="devToolStatus" role="status" aria-live="polite">Clique no mapa para colocar ou remover paredes.</p>
+            <div class="dev-floor-controls" role="group" aria-label="Navegação entre andares">
+                <button id="devPreviousFloorButton" type="button">← Andar anterior</button>
+                <button id="devNextFloorButton" type="button">Próximo andar →</button>
+            </div>
+        </section>
+    </aside>
+    </div>
+    <div class="painel" id="gameActions" hidden>
+        <div class="bot-speed-controls" id="botSpeedControls" role="group"
+            aria-label="Velocidade do Bot IA" hidden>
+            <span class="bot-speed-controls-label">Velocidade</span>
+            <button type="button" data-bot-speed="1" aria-pressed="true">1×</button>
+            <button type="button" data-bot-speed="2" aria-pressed="false">2×</button>
+            <button type="button" data-bot-speed="4" aria-pressed="false">4×</button>
+            <button type="button" data-bot-speed="10" aria-pressed="false">10×</button>
+        </div>
+        <button id="stopBotButton" type="button" hidden>Parar Bot IA</button>
+        <button id="restartBtn">Reiniciar</button>
+    </div>
+    <p id="info" hidden>Derrote os inimigos para fazer surgir o portal do andar.</p>
+
+    <script src="js/00-balance-config.js"></script>
+    <script src="js/00-bestiary-data.js"></script>
+    <script src="js/00-crafting-data.js"></script>
+    <script src="js/00-blacksmith-dialogues.js"></script>
+    <script src="js/01-world-and-state.js"></script>
+    <script src="js/02-combat.js"></script>
+    <script src="js/03-world-rendering.js"></script>
+    <script src="js/03a-floor-rendering.js"></script>
+    <script src="js/03b-wall-rendering.js"></script>
+    <script src="js/04-character-rendering.js"></script>
+    <script src="js/05-scenes-and-render-loop.js"></script>
+    <script src="js/07-bot-mode.js"></script>
+    <script src="js/08-monstruario.js"></script>
+    <script src="js/09-blacksmith.js"></script>
+    <script src="js/10-multiplayer.js"></script>
+    <script src="js/06-controls-and-startup.js"></script>
+    <script>
+        if (new URLSearchParams(location.search).get('test') === '1') {
+            const testScript = document.createElement('script');
+            testScript.src = 'tests/game-smoke.js';
+            document.body.append(testScript);
+        }
+    </script>
+</body>
+
+</html>

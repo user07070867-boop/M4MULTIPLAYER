@@ -1,0 +1,356 @@
+MASMORRA - COMO ABRIR
+
+O jogo funciona offline e nao precisa de instalacao, internet, servidor,
+Python ou Node.js. Abra index.html em um navegador atualizado com Canvas 2D.
+A verificacao manual foi feita no Chromium para Windows; outros navegadores e
+sistemas operacionais nao foram certificados. Para executar os testes de
+regressao integrados, abra index.html?test=1 no navegador. Os testes verificam
+os mapas, a acessibilidade das rotas, a loja, a memoria do Bot e a conclusao
+da partida, as animacoes dos goblins e o uso de pocoes pela IA, sem instalar
+dependencias.
+No Windows, execute `powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\verificar-malware.ps1"`
+no PowerShell, a partir desta pasta, para revisar
+padroes de risco no codigo, conferir recursos locais e solicitar uma varredura
+personalizada pelo Microsoft Defender. Para executar somente as verificacoes
+estaticas, execute `powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\verificar-malware.ps1" -OnlyAudit`.
+A politica Bypass vale somente
+para esse processo e nao altera a configuracao permanente do Windows. Se o
+Defender estiver desativado ou a politica do sistema bloquear a operacao, o
+script informa que nenhuma varredura foi iniciada. Essa verificacao nao
+substitui a protecao em tempo real do antivírus e nao consegue analisar o
+computador inteiro.
+Quando um navegador restringe a leitura de pixels de imagens locais, o jogo
+usa os limites dos quadros dos sprites para continuar funcionando.
+Depois de liberar o portal, o navegador tenta pre-gerar os mapas dos ate cinco
+andares seguintes durante periodos ociosos. Isso usa o gerador local, nao um
+servidor, e a troca de andar continua gerando o mapa normalmente se ele ainda
+nao estiver pronto.
+
+A versao responsiva do jogo fica na raiz deste projeto; nao ha uma copia mobile
+separada nesta pasta. Para compartilhar o jogo, mantenha juntos index.html,
+styles.css, a pasta js e a pasta assets. Nao renomeie nem separe os arquivos.
+As pastas python e .vscode sao opcionais para a versao original.
+
+MULTIPLAYER
+
+- O modo "Multiplayer online" mantém o modo offline e adiciona salas WebSocket.
+- O cliente fica em js/10-multiplayer.js e sincroniza a posição dos jogadores.
+- O servidor mínimo fica em server/multiplayer-server.js. Requer Node.js 18 ou
+  mais recente: execute `npm install` e depois `npm start`.
+- O primeiro jogador da sala publica um snapshot do andar:
+  posições e vida dos inimigos aparecem para os demais jogadores. O servidor
+-  aceita eventos de dano com limite de valor e retransmite o resultado à
+  sala. A morte compartilhada, a liberação do portal e o avanço para o próximo
+  andar também são retransmitidos pela sala. Drops e recompensas continuam
+  individuais, mas a coleta de cada drop é registrada pela sala para removê-lo
+  dos demais clientes. XP, nível, pontos e atributos são validados e
+  confirmados pelo servidor.
+- No lobby, informe `ws://localhost:8080` e o mesmo nome de sala em dois
+  navegadores no mesmo computador. O servidor agora escuta em `0.0.0.0`, para
+  aceitar conexoes externas: em uma rede local, informe
+  `ws://IP_DO_SERVIDOR:8080`; abra a porta 8080 no firewall e, se necessario,
+  redirecione essa porta no roteador. Para redes diferentes, hospede o servidor
+  em um VPS ou servico cloud e use um dominio com proxy TLS, informando
+  `wss://seu-dominio.example`. Quando a pagina for aberta por HTTP/HTTPS, o
+  campo do lobby sugere automaticamente o mesmo host com `ws://` ou `wss://`.
+- O servidor aceita TLS direto com `TLS_CERT=caminho\\cert.pem`,
+  `TLS_KEY=caminho\\key.pem` e `PORT=443`; nesse caso, use `wss://dominio`
+  no lobby. Em producao, e preferivel deixar um proxy (Caddy, Nginx ou o
+  provedor cloud) cuidar do certificado e encaminhar WebSocket para a porta
+  interna 8080. O endpoint `http(s)://host:porta/health` confirma se o
+  servidor esta acessivel.
+- O modo usa o primeiro jogador como publicador do estado do andar e o servidor
+  valida os eventos compartilhados. A vida e a existência dos inimigos são
+  preservadas no estado do servidor; derrotas só valem quando a vida
+  autoritativa chega a zero. XP, níveis, pontos, moedas, materiais,
+  pergaminhos, flechas e poções são concedidos e armazenados pelo servidor.
+  A coleta exige que o drop exista no snapshot autoritativo e cada drop só
+  pode ser reivindicado uma vez. O cliente envia ações e aplica snapshots,
+  sem poder definir diretamente a vida, XP ou inventário da sala.
+
+ORGANIZACAO
+
+- index.html: pagina e interface do jogo.
+- styles.css: aparencia e layout adaptavel.
+- O botao Monstruario no lobby abre fichas detalhadas, eventos, resumo e um guia de farm que cruza os 37 materiais com inimigos, andares, chances de drop e receitas do Ferreiro. Atributos, resistencias, ataques e espolios mostrados nas fichas sao lidos dos dados reais do combate e do catalogo; campos sem valor exibem `[a revisar]`. Os perfis diferenciam as criaturas: o goblin corredor e um tipo proprio, raro, sem escudo, que anuncia uma estocada e recua; a sentinela protege aliados feridos; e a Matriarca defende o ninho sem perseguir indefinidamente.
+- js/01-world-and-state.js: mapa, estado e interface do jogo.
+- js/02-combat.js: regras de movimento, inimigos e combate.
+- js/03-world-rendering.js: desenho compartilhado do mapa e do cenario.
+- js/03a-floor-rendering.js: desenho do piso.
+- js/03b-wall-rendering.js: desenho das paredes e minerios.
+- js/04-character-rendering.js: desenho de personagens e inimigos.
+- js/05-scenes-and-render-loop.js: telas e atualizacao de cada quadro.
+- js/06-controls-and-startup.js: controles e inicializacao.
+- js/07-bot-mode.js: modo Bot IA e taticas adaptativas.
+- js/00-balance-config.js: em `GAME_BALANCE.shop.items`, ajuste `nivelMinimo` de cada item (valores `[a revisar]`); campo vazio equivale ao nivel inicial 1. `showLockedItems` controla a visibilidade. Em `GAME_BALANCE.bot.retreat` ficam gatilhos, limiares, chances, histerese, cooldown e parametros de depuracao (`debug` e `forceTrigger`). Em `GAME_BALANCE.bot.objects` ficam percepcao, prioridade, chances por gatilho, limite de ataques e depuracao (`debug` e `forceTrigger`). Os gatilhos forcados aceitam `lowHealth`, `outnumbered`, `higherLevelEnemy`, `noResources`, `environmentalDanger` para recuo e `blocked`, `trapped`, `resource`, `cover` para objetos; use `none` para desativar.
+- js/00-bestiary-data.js: atributos, ataques, resistencias, drops, materiais e fichas narrativas de criaturas, NPCs e eventos usados pelo Monstruario.
+- js/08-monstruario.js: renderizacao, busca e filtros do Monstruario; inclui o guia de farm ligado aos dados de materiais e receitas.
+- js/00-crafting-data.js: catalogo data-driven das 87 receitas e configuracao da forja; campos `attributes`, `cost` e `difficulty` podem ser preenchidos em cada receita.
+- js/00-blacksmith-dialogues.js: falas editaveis de Oren.
+- js/09-blacksmith.js: selecao de ingredientes, validacao de receitas, salvamento da descoberta opcional e feedback da forja.
+- assets/: quadros de animacao dos chefes, sprites de personagens e cenarios, e recortes de moedas usados nas quedas e no inventario.
+- Goblins e corredores usam `assets/goblin-animations.png`: parado, andar/correr, ataques de lamina e escudo, defesa, dano, morte, pulo, agachar, interagir, carregar e usar item. Goblins com ate metade da vida procuram a pocao mais proxima em um raio de oito blocos, pegam-na e bebem; a cura segue a raridade. Ataques frontais tem 15% de chance de serem esquivados com agachamento, com recarga de 1,5 s.
+- Os mapas jogaveis da versao original foram ampliados de 30 x 20 para 40 x 27 blocos. A camera acompanha o jogador para explorar as novas salas, mantendo o personagem e os blocos legiveis; as conexoes, a moldura externa e as arenas de chefe continuam acessiveis.
+- Nos andares de castelo (10–20), as paredes retomam a alvenaria anterior; as salas laterais e os saloes foram ampliados novamente, em cerca de 50% de area nas salas principais. Inimigos comuns surgem mais espalhados, enquanto os grupos de eventos continuam juntos.
+- As janelas do castelo usam os recortes transparentes de `assets/environmental/castle-windows.png`; as maiores ocupam dois blocos e as menores, um, inclusive nas paredes verticais.
+- Os personagens sem spritesheets (Lia, Oren, Nara e criaturas como morcegos, lagartos e escribas) usam desenho procedural em pixel art, com silhuetas contornadas, detalhes de vestuario e acentos de material; as folhas de animacao existentes permanecem preservadas. As mudancas visuais nao alteram colisoes nem combate.
+
+CONTROLES
+
+- WASD ou setas: mover.
+- 1: abrir ou fechar o inventario.
+- A cada nivel, voce recebe 1 ponto de atributo; nos niveis 5, 10, 15 e 20 recebe 1 ponto extra. Invista na HUD: Vida aumenta a vida maxima em 10 e cura 10, Corpo a corpo aumenta em 2 o dano de ataques corpo a corpo, e Mira aumenta em 2 o dano de armas que dependem de mira (arco). Vida, dano e velocidade nao aumentam automaticamente ao subir de nivel ou avancar de andar. Magia podera usar Mira quando for adicionada.
+- Shift + direcao: dash; se houver um inimigo no trajeto, atravessa-o.
+- G: conversar com Lia, Oren ou Nara quando estiver proximo.
+- Lia (andares 3, 8 e 13) troca um mapa rabiscado ou 4 cobres por uma pista direcional da saida.
+- Oren, o ferreiro (andares 6, 11 e 16), fica em uma area escolhida longe de inimigos. Pressione G para abrir Forjar, Conversar ou Sair. Na forja, escolha os materiais e quantidades; receitas Iguais usam 2 ou 3 unidades de um material, e receitas Mix aceitam os dois ingredientes em qualquer ordem. F confirma a forja quando o foco nao esta em um campo.
+- A forja usa o inventario de materiais e as 87 receitas de js/00-crafting-data.js. Produtos registrados como materiais podem ser usados em outras receitas. As falas ficam em js/00-blacksmith-dialogues.js; os itens criados aparecem com nome e icone.
+- Em `blacksmithConfig`, ajuste `floors`, `interactionRange`, `minimumEnemyDistanceTiles` e `inventorySlotCapacity`. `useRecipeCostsAndDifficulty` ativa custos e tempo quando `cost` e `difficulty` estiverem preenchidos na receita; por padrao, a forja e gratuita e instantanea. `recipeDiscoveryMode` aceita `all` (padrao) ou `success` para registrar receitas depois de forjadas. O progresso opcional e salvo no armazenamento local do navegador.
+- No desafio opcional de Nara (andares 9 e 15), esquive de tres ataques anunciados usando Shift + direcao para receber 5 cobres.
+- Compre a melhoria de dash na loja por 10 cobres para aumentar sua distancia em 50%.
+- Espaco durante o dash: ataque que causa o dobro de dano.
+- Compre a lança de aço na loja (Tab) por 8 cobres equivalentes; depois, pressione R para uma estocada de alcance médio.
+- Compre o arco de teixo na loja (Tab) por 12 cobres equivalentes; mire com o mouse e clique na masmorra para disparar flechas de 14 de dano. As flechas alcancam 220 pixels e param nas paredes.
+- Compre pocoes comuns de cura na loja (Tab) por 5 cobres; cada uma recupera ate 35 pontos de vida.
+- Dano corpo a corpo carrega o golpe especial da espada: cada ponto de dano preenche 1% da carga. Use Z para selecionar a habilidade e F para executar o golpe carregado. Ele atinge inimigos em um raio de quatro quadrados e causa duas vezes o dano normal, com recarga propria de 3 segundos. O Pergaminho da conquista nao e consumido: enquanto estiver no inventario, dano corpo a corpo evolui automaticamente a aura, avancando uma etapa a cada 100 pontos de dano. Sao oito etapas, da aura verde (+12,5%) ate a aura final (+100%), com bonus cumulativo de dano e velocidade. A carga fica cheia no maximo; ao avancar de andar, aura e cargas especiais reiniciam, mas o pergaminho permanece no inventario.
+- O Pergaminho da perdicao e ativado com P, consome uma unidade e invoca o Susano roxo ate a morte do personagem. Inimigos proximos fogem e recebem 5 de dano por segundo; um golpe derrota inimigos comuns, mas nao chefes. R causa dano dobrado e devolve metade do dano como vida, com recarga de 3 segundos. L confunde inimigos proximos para que lutem entre si por 5 segundos, com recarga de 7 segundos.
+- No inventario, selecione "Ver pergaminhos" para ver imagens e descricoes; feche com Esc ou no botao Fechar.
+- No lobby, selecione Bot IA para uma partida automatica. O bot prioriza salas nao visitadas mais proximas e salas com inimigos conhecidos, evita perseguir inimigos por salas distantes, luta contra os que encontra, esquiva de bolas de fogo anunciadas pelos dragoes e continua explorando ate limpar o andar; depois segue diretamente para o portal. Tambem usa recursos e compra equipamento entre andares, tentando concluir os 20 andares. A HUD mostra sua nota de desempenho (0 a 100), analisa progresso, eficacia no combate e dano recebido, e ajusta a distancia de combate e o flanqueamento para corrigir erros. O bot tambem considera a nota e o dano proporcional por andar da partida anterior para ajustar a distancia de combate e usar pocoes mais cedo quando necessario; se identificar um andar de alto dano, prioriza protecao antes de repeti-lo. Para evitar desperdicio, so consome uma pocao quando a vida cai abaixo do limite de seguranca e a cura pode ser aproveitada. A HUD apresenta oportunidades de melhoria (0 a 100, quanto maior, mais pontos identificados) com dicas praticas de combate e equipamento baseadas nos resultados. A carta final calcula a media de dano com a vida maxima de cada andar e considera tambem o andar mais perigoso na classificacao da dificuldade. A memoria local do navegador guarda estatisticas das partidas e mapas que o bot explorou, registrando paredes, baus e barris vistos. Os dados nao saem do dispositivo; limpar os dados do navegador apaga esse aprendizado. Ao selecionar Bot IA no lobby, use Exportar memoria ou Importar memoria antes de iniciar para transferi-la manualmente entre navegadores ou dispositivos; a importacao substitui a memoria atual e pede confirmacao. No console do navegador, use window.botDebug.dump() para inspecionar o estado atual, a memoria persistente e o andamento da partida.
+- Durante a partida do Bot IA, selecione 1x, 2x, 4x ou 10x nos controles de velocidade; a velocidade normal e 1x. As velocidades aceleradas mantem as subetapas de fisica e combate e a cadencia de decisao da IA baseada no tempo simulado.
+- As animacoes de personagens foram aceleradas sem alterar movimento, ataques ou recargas. Ajuste `GAME_BALANCE.visual.actorAnimationSpeedMultiplier` em `js/00-balance-config.js` (inicial: 1.6x) para regular a velocidade visual.
+- O modo Dev do lobby oferece invulnerabilidade, passagem por paredes e compras gratuitas. O inventario inicial inclui armas, armadura, escudo, pocoes de todas as raridades e um exemplar de cada pergaminho. No painel lateral, alterne paredes, mova paredes, mobs e itens, adicione mobs em pisos livres e navegue pelos andares 1 a 20.
+- A dificuldade foi reequilibrada para moderada: o dano dos inimigos aumenta 13% por andar e a vida 14% por andar; os chefes anteriores ao final recebem 50% a mais de vida e velocidade, com dano escalonado pelo andar. O dragao do andar 5 causa dano basico, sem o bonus de dano dos chefes, para evitar um pico inicial. O chefe do andar 20 usa 1,9 vez o multiplicador de chefe (antes, o dobro) e continua sendo o mais forte. A interface mostra nome e vida restante em texto, sem barras ao redor do chefe.
+- Ao vencer os 20 andares no modo Bot IA, a carta de conclusao inclui combate por arma, economia, dano recebido por andar, passos e revisitas de rota, monstros derrotados e seus principais desafios, alem de sugestoes praticas de melhorias para a proxima partida.
+- No modo Bot IA, o personagem comeca com um escudo nivel 1 e cinco pocoes comuns de cura sem custo; o dash continua disponivel com sua recarga normal. Essas vantagens nao sao concedidas ao iniciar uma partida no modo Jogar. Entre andares, o bot pode comprar melhorias na loja, prioriza arco e equipamento necessario, reabastece uma pocao quando restam menos de duas e tenta guardar pelo menos 3 cobres ou 20% do saldo para compras futuras.
+- Ao chegar a aura vermelha final (+100%), continue acertando inimigos para carregar a barra compartilhada; com ela cheia, pressione F com a espada equipada para dobrar o dano da espada por 8 segundos. A carga tambem pode ser usada por outros especiais compartilhados.
+- Inimigos comuns detectam o jogador a maior distancia, correm mais rapido quando perseguem e atacam mais vezes; aranhas recarregam salto/teia e ogros avisam mais cedo os golpes em area.
+- A cada grupo de 10 inimigos comuns, 5 recebem armadura, escudo ou ambos.
+- Ate o andar 9, os inimigos comuns sao goblins e aranhas, e todos contam para o mesmo objetivo; nos andares 5 a 9, algumas aranhas surgem cobertas de fuligem. A Matriarca do Tear protege um ninho opcional no andar 8, fora da meta principal, e libera ate duas jovens ao perder metade da vida.
+- A partir do andar 10, trolls e ogros dividem o castelo com os caes de fuligem; sentinelas de vitral aparecem nos andares 10–14 e 16–19. O cao anuncia a investida e causa dano extra se atingir o jogador pelas costas; a sentinela anuncia seu raio de luz e resiste a ataques frontais.
+- No andar 20, o Guardiao do Trono pode substituir o chefe habitual em metade das partidas. Seu pulso circular e anunciado no chao e aumenta de alcance na segunda fase.
+- Aranhas sao mais frageis e ageis que goblins; tem corpo marrom segmentado, carapaca texturizada, olhos luminosos e oito patas articuladas animadas sem ocupar mais espaco. Alem de saltar, disparam teias: o primeiro personagem/inimigo alinhado e preso por 1,5 segundo; paredes e obstaculos bloqueiam o disparo.
+- As masmorras dos andares 1 a 9 incluem atalhos diagonais entre salas e bolsos de sombra com menos iluminacao.
+- Nas masmorras dos andares 1 a 9, veios de minerio aparecem em cerca de 30% dos blocos menores elegiveis das paredes.
+- O piso dos andares 1 a 9 tem um pouco mais de manchas de sangue seco.
+- Teias pixeladas aparecem com menor frequencia em algumas quinas das paredes, em tamanhos variados e com mini aranhas; param ao encontrar paredes ou espacos sem piso e usam uma camada em cache para manter a renderizacao fluida.
+- O mapa tem 45 x 30 tiles, 25% mais area que o mapa original de 40 x 27. Cada partida usa uma seed para gerar os andares 10 a 20 do castelo: corredor horizontal, corredor vertical, percurso em L ou grande salao central com 2 a 4 saidas. O mesmo arquétipo nao aparece em andares consecutivos; os andares de chefe 10, 15 e 20 usam o grande salao como arena. O tema das salas continua ligado ao andar (alojamentos, biblioteca, arsenal, capela, laboratorio, tesouro, ala nobre, torres arcanas ou sala do trono). A funcao generateCastleFloor(floorNumber, seed) devolve grid de tiles, salas com papeis, portas, entrada, escada, camadas de piso e paredes, objetos/recompensas, pontos de surgimento e um slot seguro opcional para NPC. Um BFS valida a rota entre entrada e escada e, se necessario, o gerador tenta outra geometria de forma deterministica. Portas abrem ao se aproximar e fecham quando a passagem fica vazia.
+
+Exemplos esquematicos de layout (S = entrada, E = escada, + = porta/corredor, # = parede):
+
+Horizontal
+    [sala]   [sala]
+S====+=======+====E
+    [sala]   [sala]
+
+Vertical
+        E
+        +
+ [sala] + [sala]
+        +
+ [sala] + [sala]
+        +
+        S
+
+Em L
+ [sala]       [sala]
+                +
+S=======+=======+
+        [curva] + [sala]
+                +
+                E
+
+Grande salao central
+          [sala]
+             +
+[entrada] + [SALAO] + [escada]
+             +
+          [sala]
+
+Parametros ajustaveis em castleLayoutConfig (js/01-world-and-state.js): mapa 45 x 30; corredores com largura 3 a 5 tiles; salas laterais 13 a 17 x 11 a 14; saloes centrais 24 a 26 x 15 a 18; 2 a 4 saidas no salao; pesos iniciais horizontal 2, vertical 2, L 2 e salao central 3. As salas curtas sem saida recebem um bau; corredores recebem posicoes de emboscada/defesa, e saloes recebem posicoes para grupos. Os NPCs Lia, Oren e Nara continuam limitados ao calendario do jogo, com no maximo um por andar, e usam uma sala reservada quando disponivel.
+- A partir do andar 10, o piso tem menos grama e mais sangue seco, com ossos, teias e marcas de garras espalhados.
+- As paredes de caverna dos andares 1 a 9 usam blocos rochosos irregulares em 16/32 px; veios assimetricos aparecem em cerca de 30% dos blocos de 16 px e 90% dos grupos de 32 px, enquanto musgo aparece em 20% e 35%, respectivamente. Veios e musgo foram ampliados em 10%, mantendo pixels nitidos; as manchas de musgo tambem ficam maiores nos blocos de 32 px. Ha rachaduras e sombra de contato; nos andares 7 a 9 surgem fissuras quentes e sinais de contaminacao. O prompt do tileset, com paleta limitada, grade de autotiles nomeados e preview de corredor 20x12, fica em `assets/cave-wall-tileset-prompt.txt`. A partir do andar 10, a alvenaria de castelo mantem juntas profundas e vestigios de sangue, ossos, teias e garras.
+- Trolls envenenam o jogador ao acertar, causando dano gradual que cresce junto com a progressao do andar; enquanto o jogador esta envenenado, o troll tenta atacar de perto ou fugir correndo quando esta longe. Ogros avisam antes de uma pancada em area, cujo dano tambem aumenta gradualmente por andar, pode ser evitada com dash e fere outros inimigos proximos.
+- Ha um chefe a cada cinco andares. O Ceifador aparece exclusivamente no andar 15 e avisa antes do golpe de foice; nos demais andares de chefe, o inimigo e o dragao ou o golem de lava.
+- Inimigos podem surgir sem equipamento, com armadura, escudo ou ambos; armaduras e escudos têm durabilidade independente. A espada desgasta dois pontos do escudo inimigo por golpe bloqueado; a lança e o arco desgastam um.
+- Um acerto de um inimigo em outro tem 1% de chance de iniciar uma briga de racas: inimigos passam a atacar outras racas e ignoram o personagem. As eliminacoes contam para a meta e concedem XP e moedas normalmente; quando sobra apenas uma raca, os sobreviventes voltam a perseguir o personagem.
+- Os encontros especiais dos andares 3, 12 e 16 aguardam o personagem entrar na sala reservada. Ao entrar, o confronto comeca e uma notificacao no alto da tela resume o evento e as opcoes do jogador.
+- Inimigos com escudo o erguem quando voce se aproxima e bloqueiam ataques pela frente.
+- Armaduras reduzem ate 50% do dano recebido enquanto houver durabilidade; os bloqueios do escudo consomem durabilidade antes da reducao da armadura. O Bot IA compra no maximo uma melhoria defensiva por loja para manter o desafio nos andares finais.
+- Inimigos comuns movem-se 10% mais rapido; o jogador tem 25% de chance de esquivar de um golpe.
+- Ao avancar de andar, o personagem conserva a vida que tinha ao entrar no portal; nao recebe cura automatica entre andares.
+- Inimigos comuns, exceto aranhas, podem surgir em versoes femininas, com chance de 35%; chefes podem surgir em versao feminina, com chance de 50%. Goblins femininas tem pele verde-clara, cabelo longo e armadura ajustada com adornos. Trolls usam pele verde-clara, cabelo grisalho volumoso, orelhas pontudas, focinho saliente e equipamento de couro e madeira, em pixel art detalhada; chefes recebem cabelo, joias e outros detalhes visuais proprios. O ogro e desenhado proceduralmente em pixel art, com cabeca ampliada para destacar o rosto e o capacete de metal angular com crista, viseira e rebites; tambem tem pele verde, rosto com sobrancelhas e presas, armadura de couro marrom texturizada, faixa laranja com fivela metalica e botas. Essas variacoes visuais nao mudam atributos, hitboxes nem combate.
+- A altura visual dos inimigos comuns acompanha os blocos do mapa: goblins, aranhas, Cao de fuligem e Matriarca ocupam 1 bloco; Troll, Ogro e Sentinela de vitral ocupam 2. Os sprites ficam ancorados no piso; hitboxes e escalas proprias dos chefes nao mudam.
+- A personagem selecionavel Mulher usa `assets/female-player-animations.png`: a primeira fileira tem um quadro parado e nove quadros de caminhada; a segunda contem dez quadros do ataque de espada. A hitbox dela acompanha o tamanho renderizado do sprite (28 x 47 px), aumentando a area ocupada e a colisao com paredes. Os corredores e portas das masmorras comportam a largura dessa hitbox. Os atributos de combate do personagem Homem permanecem iguais. Se a folha nao carregar, o jogo desenha uma alternativa em pixel art; nao e necessario um arquivo de sprite adicional.
+- Moedas: 1 prata vale 2 cobres, 1 ouro vale 5 pratas, 1 rubi vale 10 ouros e 1 esmeralda vale 15 rubis. Moedas de maior valor aparecem com menor frequencia; a loja aceita o saldo total e devolve o troco em moedas.
+- A cada duas compras bem-sucedidas do mesmo item, a loja aumenta em 1 o nivel minimo exigido para as proximas compras desse item. A contagem e independente para cada item e reinicia ao comecar uma nova partida.
+- Baus, barris e pocoes podem ter raridade comum, incomum, rara, epica ou lendaria. A raridade muda os sprites pixel art; os barris e baus tem mais relevo, veios de madeira, aros e ferragens. Drenos, canos e pocoas de esgoto aparecem apenas nos mapas de masmorra anteriores ao andar 10; foram removidos das salas e arenas do castelo. Teias se rompem quando tocadas. As chances-base sao 60%, 25%, 10%, 4% e 1%. Pocoes recuperam 35, 45, 60, 75 ou 100 pontos de vida. Baus raros tem mais chance de conter uma pocao, e barris raros tem mais chance de derrubar uma.
+- O piso e as paredes estaticos de cada mapa sao renderizados em uma camada pixel-art em cache e reutilizados durante a partida, mantendo a resolucao visual original e reduzindo o trabalho repetido por quadro.
+
+Os quadros do golem vao de lava-golem-0.png a lava-golem-7.png.
+Os quadros do dragao vao de dragon-0.png a dragon-9.png.
+A folha de sprites do Ceifador e grim-reaper-sheet.png.
+
+Inimigos comuns ganham 13% de dano e 14% de vida por andar, a partir do andar 1,
+tanto para o jogador quanto para o Bot IA. Trolls e ogros surgem a partir do
+andar 10, mas seus multiplicadores de vida, dano e ataques especiais aumentam
+gradualmente ate o andar 19 para evitar um salto brusco na troca de inimigos.
+Chefes tambem escalam com o andar: vida em 1,5% e dano em 2% por andar de chefe
+acima do andar 5, incluindo ataques especiais e a segunda fase.
+Ao morrer pela primeira vez, todos recuperam a vida maxima uma vez e entram na
+fase II, com intervalos e avisos dos ataques mais curtos. E preciso derrotar
+novamente o chefe para concluir o combate.
+
+Inimigos proximos que veem o jogador acertar outro inimigo passam a persegui-lo
+com mais agressividade por alguns segundos. Cada testemunha tem 10% de chance
+de fugir ate um esconderijo valido junto a um bau ou barril e aguardar ali.
+
+No inicio da aventura e a cada novo andar, o jogador surge em uma posicao
+aleatoria e livre do mapa, sem aparecer sobre paredes, objetos ou inimigos.
+
+Os arquivos JavaScript sao carregados em ordem pelo index.html. O projeto usa
+somente recursos nativos do navegador para continuar simples e funcionar
+diretamente do disco, sem etapa de compilacao ou dependencias externas.
+
+AMBIENTACAO DOS ANDARES
+
+Os mapas existentes recebem perfis visuais por andar sem alterar a matriz de
+colisao, as portas, os corredores, as salas, os pontos de inicio/saida, os
+inimigos, os objetos ou os perigos existentes. Os perfis ajustam somente as
+cores de piso e parede, a intensidade e o tom da iluminacao, a poeira ambiente
+e as cores dos elementos decorativos desenhados na camada visual.
+
+Os andares 1-4 usam uma paleta terrosa de mina, com desgaste progressivo. Os
+andares 5-9 ganham tons quentes de fuligem e forja, agua visualmente mais fria
+nas cisternas e luz mais forte das tochas; as fendas de lava sao apenas detalhes
+decorativos no piso, sem criar terreno ou perigo de lava. Os andares 10-14 usam
+pedra fria e contaminacao inicial, 15-17 acentuam tons arcanos e dourados, e
+18-20 ficam mais escuros e carmesins.
+Tapetes, vitrais/janelas, escadarias, colunas, veios de minerio, teias, manchas,
+tochas, agua de esgoto e particulas existentes recebem variacoes cromaticas
+quando aplicavel. A camada visual tambem desenha props em pixel art no mesmo
+estilo, contorno e escala das paredes e do piso. As minas
+recebem sprites transparentes dedicados de escoras, vagonetes,
+picareta, pa, lanterna, poças, pedregulhos e teia com aranha;
+as cisternas recebem canos, grades, respiros e fuligem; rachaduras com lava
+aparecem como detalhes raros, grandes e pixelados, desenhados diretamente no
+piso em uma area de dois blocos, sem colisao.
+No castelo, os props variam por andar: estandartes e armaduras, beliches,
+baus e mesas, estantes e pergaminhos, racks e bigornas, altar e velas, itens
+de alquimia e observacao, tesouros, retratos, correntes, selos, cristais,
+barreiras arcanas e trono.
+
+Cada prop declara largura e altura em blocos: pecas pequenas usam um bloco,
+objetos grandes ocupam dois em uma ou nas duas dimensoes, e itens monumentais
+podem chegar a tres. A arte usa espaco negativo dentro do seu limite quando
+isso melhora a silhueta; o tamanho nao implica preencher toda a area.
+Os props sao escolhidos deterministicamente segundo o tipo do objeto, a
+geometria do mapa e, no castelo, a funcao da sala. Vagonetes ficam dentro de
+salas para nao bloquear a passagem; objetos de drenagem e calor
+ficam associados a areas compativeis; a decoracao do castelo procura salas
+como biblioteca, arsenal, capela, laboratorio ou tesouro quando esses papeis
+existem. Uma escora de madeira e colocada em cada trecho reto de corredor
+com espaco suficiente; nos corredores horizontais sao colocadas duas escoras
+em pe, e nos verticais uma escora atravessa a largura entre as paredes. Os
+apoios encostam nas paredes opostas. A escora e desenhada em primeiro plano,
+sobrepondo o personagem quando ele passa pelo vao. Ha no maximo dois props
+por sala. Duas lanternas pequenas ocupam um bloco e
+substituem duas das tochas geradas em cada andar 1-4; as demais tochas
+permanecem, e a substituicao preserva a rota ate a saida. Carrinhos ficam
+dentro das salas para nao bloquear os corredores. A selecao nao altera paredes.
+Props fisicamente solidos, como
+escoras, ferramentas, lampioes, pedregulhos, canos e bases de respiro, tem
+hitboxes proporcionais as silhuetas que impedem a passagem de criaturas, mas
+nao do jogador. Os carrinhos de mina tambem bloqueiam a passagem do jogador;
+ataca-los com espada ou lanca os quebra e deixa cair uma unidade de fuligem
+mineral. Todos os props ficam fora de paredes, itens e outros props.
+Os props admitem orientacao horizontal ou rotacao de 90 graus quando a forma
+permite; a geracao prefere a orientacao adequada ao corredor, parede ou
+abertura. Grades no chao, poças, teias, rachaduras do piso, fuligem e
+barreiras de energia sao atravesseis e nao causam dano. As hitboxes nao mudam
+a matriz de mapa; as caixas sao limitadas aos limites do mapa e a navegacao
+respeita as pecas solidas para as criaturas sem bloquear as rotas do jogador.
+A escora usa hitboxes separadas para os dois postes e a travessa, preservando
+o vao central do sprite. No andar 16, a reserva da camara secreta tambem evita
+as hitboxes dos props para que a abertura posterior nao construa paredes sobre
+a decoracao.
+O jogo ainda nao tem arquivos de audio ambiente. Sons de gotejamento, vapor,
+lava ou saloes nao foram adicionados por falta de recursos de audio.
+Os recortes de mina fornecidos estao em `assets/environmental/`; o fundo quadriculado
+da folha foi removido para preservar transparencia no jogo. Os recortes de
+cisterna da segunda folha tambem usam transparencia e incluem dutos, grade,
+respiro de vapor e monte de fuligem. As fendas de lava nao usam mais sprite
+ambiental: sao desenhadas diretamente sobre alguns ladrilhos do piso.
+
+NINHO DA MATRIARCA E SALAS SECRETAS
+
+No andar 8, o corredor de aproximacao leva a Lia e a uma fogueira improvisada
+antes da arena de 18 x 12 blocos. A arena tem pilares, vigas quebradas, teias
+que reduzem a velocidade, dois tuneis laterais e casulos destrutiveis. O chefe
+fica em (24,14); abaixo de 50% de vida, a Matriarca anuncia a ninhada, cobre
+mais piso com teia e invoca aranhas pelos tuneis ainda ativos. Destruir cada
+casulo impede a aranha correspondente de aparecer.
+
+Previa esquematica da arena (nao esta em escala):
+
+                     entrada
+                        |
+                 corredor de mina
+                   Lia  fogueira
+                        |
+        +------------------E----------------+
+        |         P             P           |
+        | C                               w |
+tunel ->|       teia       M               |
+        | P             w       P           |
+tunel ->| C         teia                     |
+        +------------------------------------+
+
+Legenda: P = pilar; w/teia = piso lento; C = casulo; M = Matriarca.
+As vigas quebradas atravessam partes do teto da arena.
+
+A primeira sala secreta e o Ninho Antigo, uma sala de 10 x 8 blocos junto a
+arena. Acerte tres vezes o casulo gigante em (31,14) para revelar a passagem
+em (32,14). A sala nao tem inimigos comuns; contem um bau e o diario de um
+mineiro. O bau garante 1 perola de quitina e 3 sedas grossas, materiais usados
+nas receitas da forja de Oren. O diario liga os ovos antigos ao calor e a
+contaminacao que sobem das minas. Lia da uma pista sobre a teia densa e a
+coroa rachada, mas nao marca a sala no mapa.
+
+Previa esquematica do Ninho Antigo:
+
+       +----------+
+       |          |
+       |   bau    |
+parede |          |
+aberta >   ovos   |
+       | diario   |
+       |          |
+       +----------+
+
+Os dados ficam em `secretRoomDefinitions` e incluem `id`, andar, limites,
+gatilho, recompensa, pista, bau, diario e lore. O estado de cada sala guarda
+`opened`, `rewardCollected` e `diaryRead`, no armazenamento local
+`mm-secret-room-progress-v1`, indexado pela seed da partida. O sistema aceita
+gatilhos de interacao, destruicao de objeto, derrota de inimigo, entrega de
+item e sequencia de teclas. `activateSecretRoomTrigger` anima a revelacao por
+0,8 segundo, toca o aviso existente da Matriarca, troca a parede por piso e
+salva o estado; `persistSecretRoomProgress` mantem a recompensa e a leitura
+do diario entre reconstrucoes do mapa com a mesma seed. A sala e opcional e
+nao bloqueia o portal nem a conclusao do andar.
+
+Os visuais de pilares, teias, vigas, ossos, fogueira, casulos, bau e diario
+sao desenhados em pixel art pelo jogo. Sao reutilizados os sprites existentes
+da Matriarca e das aranhas, props de mina/cisterna e o som de aviso da
+Matriarca; nao foram adicionados arquivos raster ou de audio.
+
+Principais parametros ajustaveis: `matriarchArenaConfig.floor` (8),
+`bounds` (18 x 12), `secretBounds` (10 x 8), `broodCount` (2),
+`phaseTwoHealthRatio` (0,5) e `webSlowMultiplier` (0,62). A vida e os ataques
+da Matriarca, assim como as chances de drop normal (seda grossa 70%, perola
+de quitina 12%, corda de seda 25%), permanecem nos dados reais do monstruario.
+Os dois casulos de combate tem 20 pontos de vida; o casulo secreto tem 30.
+
+Os elementos procedurais que nao possuem sprites, como brilhos de tochas,
+portais, auras, particulas, agua e paineis da interface, usam cores em degraus,
+formas retangulares e transicoes discretas para combinar com a pixel art 16-bit.
+Sprites existentes e suas folhas de animacao permanecem inalterados.

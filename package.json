@@ -1,0 +1,12 @@
+{
+  "name": "masmorra-multiplayer",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Servidor de salas multiplayer para MM&MM",
+  "scripts": {
+    "start": "node server/multiplayer-server.js"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  }
+}

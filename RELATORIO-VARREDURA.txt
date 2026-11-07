@@ -1,0 +1,603 @@
+RELATORIO DE VARREDURA E REVISAO VISUAL - MM&MM
+Data: 02/11/2026
+
+RESUMO
+- A revisao encontrou e corrigiu defeitos visuais reproduziveis em telas
+  pequenas, na ordem de sobreposicao de paineis e nas telas de vitoria/derrota.
+- Apos as correcoes e a integracao das receitas, o harness do jogo executou
+  70 testes; a validacao final terminou com 70 aprovados, 0 falhos e 0 ignorados.
+- A memoria do Bot IA foi atualizada para v3, com migracao da v2,
+  aprendizado reutilizavel, registro de vitorias e validacao de importacao.
+- As verificacoes visuais finais confirmaram os overlays centralizados e
+  cobertura integral da cena, os dialogs em celular e a navegacao do monstruario.
+- A verificacao estatica dedicada e integrada ao Microsoft Defender foi
+  adicionada em 02/11/2026; neste computador o Defender estava desativado,
+  portanto nenhuma varredura antimalware real foi iniciada ou certificada.
+
+INTEGRACAO DO CATALOGO DE RECEITAS
+- Incluidas as 87 receitas da planilha: 36 do tipo "Igual" e 51 do tipo "Mix".
+- As 87 receitas aparecem como slots quadrados no inventario, no estilo dos
+  demais itens. Os ingredientes e quantidades sao mostrados somente ao passar
+  o cursor ou focar o slot; fabricacao fica desabilitada visualmente se faltar
+  material.
+- A arte dos produtos, materiais e equipamentos fica limitada a area acima do
+  nome do slot, evitando que os rotulos encubram os icones. Em telas estreitas,
+  as grades internas de materiais e produtos usam cinco colunas para manter
+  os icones legiveis.
+- Fabricar consome os ingredientes na quantidade indicada. Resultados que ja
+  existem como materiais voltam ao estoque de materiais; os demais produtos
+  ficam agrupados por ID do item, mesmo quando obtidos por receitas diferentes.
+  Equipamentos continuam nos slots próprios; produtos fabricados ainda sem
+  funcionalidade de equipamento podem ser acumulados em pilhas.
+- Cada uma das 87 artes foi recortada com limites próprios, ajustados ao
+  contorno do item. Textos e fragmentos das molduras foram removidos, o fundo
+  ficou transparente e os PNGs foram exportados em 128 x 128 px, preservando
+  a arte pixelada.
+- A nova folha enviada para as combinacoes R077 a R087 substituiu esses 11
+  sprites: cada item foi recortado separadamente, sem moldura ou texto, com
+  transparencia e tamanho final de 128 x 128 px.
+- As quatro novas folhas de combinacoes tambem substituiram individualmente
+  os sprites R001 a R076. O R056 repetido foi obtido da folha mais recente;
+  os 87 arquivos finais continuam em 128 x 128 px, com cantos transparentes.
+- Os produtos ainda nao receberam descricoes inventadas nem efeitos. Seus
+  comportamentos ficam pendentes de definicao.
+- A validacao no navegador confirmou 87 botoes de receita com icones
+  correspondentes; o teste tambem verifica o carregamento em 128 x 128 px e
+  os cantos transparentes dos recortes. Em viewport de 390 x 844 px, o tooltip do slot na borda
+  direita permaneceu dentro da tela (x=142 a 382), sem overflow horizontal;
+  o painel de detalhes coube na largura disponivel e permite rolar descricoes
+  longas. Uma regressao mede que o icone de cada produto nao invade a faixa
+  do nome; o layout de materiais e produtos tambem foi ajustado para cinco
+  colunas em telas estreitas.
+- O harness confirmou a recusa de ingredientes insuficientes, o consumo
+  correto, o armazenamento com icone e o retorno de resultados-materiais.
+
+ESCOPO DA REVISAO
+- JavaScript do jogo: inicializacao, renderizacao, fluxo de jogo, combate,
+  progressao, mapas, inimigos, Bot IA e modo Dev, conforme os testes existentes.
+- Interfaces e estados: lobby, selecao de personagem e modo, HUD, pontos de
+  atributo, inventario, loja, detalhes de item, galeria, monstruario, painel Dev,
+  carta de conclusao do Bot e telas de vitoria/derrota.
+- Responsividade: desktop e viewports moveis estreitas, incluindo 390 px,
+  375 px e 320 px de largura; verificacao de overflow horizontal e conteudo
+  dentro da area visivel.
+- Inspecao visual de mapas/jogo: andares 1, 10, 15 e 20.
+- Busca estatica por referencias locais quebradas e indicadores comuns de
+  carregamento remoto/dinamico e execucao de comandos.
+
+DEFEITOS REPRODUZIDOS E CORRIGIDOS
+1. Telas de vitoria e derrota deslocadas/cortadas
+   Causa: o desenho do overlay herdava a transformacao da camera.
+   Correcao: salvar/restaurar o contexto do canvas e redefinir a transformacao
+   antes de desenhar a cobertura e a mensagem.
+   Verificacao: derrota ("Game Over") e vitoria ("Voce venceu!") apareceram
+   centralizadas sobre toda a cena.
+
+2. Dialogs de inventario, loja e monstruario pequenos em celular
+   Causa: os paineis eram limitados pela altura do canvas, menor que a viewport.
+   Correcao: posicionar esses dialogs com dimensoes relativas a viewport em
+   telas estreitas.
+   Verificacao: os paineis permanecem dentro da tela e o conteudo longo do
+   monstruario pode ser rolado internamente.
+
+3. Monstruario excedia a largura em telas estreitas
+   Causa: largura minima intrinseca de conteudo em elementos grid/flex.
+   Correcao: permitir que o cartao e o conteudo encolham ate a largura disponivel.
+   Verificacao: sem overflow horizontal; as 16 fichas, 16 linhas de resumo e
+   3 encontros especiais estao presentes.
+
+4. Controles de evolucao podiam ficar abaixo das habilidades no HUD movel
+   Correcao: reorganizar o grid movel para priorizar os pontos de atributo e
+   permitir rolagem interna do HUD quando necessario.
+
+5. Lobby e cena excediam a largura em viewports muito estreitas
+   Correcao: restringir largura ao espaco disponivel, flexibilizar as abas de
+   personagem e permitir quebra dos botoes de modo.
+   Verificacao: lobby a 320 px sem overflow horizontal.
+
+6. Galeria podia ficar escondida atras do inventario
+   Causa: z-index inferior ao painel de inventario.
+   Correcao: elevar a camada da galeria para que o dialog aberto fique visivel.
+
+7. Carta de conclusao do Bot em celular
+   Verificacao adicional apos as correcoes: dialog ocupou a viewport de
+   390 x 844 px, sem overflow horizontal, com botoes acessiveis.
+
+8. Itens do inventario se sobrepunham em janelas baixas
+   Causa: as linhas da grade usavam alturas fracionarias dentro de uma area
+   rolavel, comprimindo as linhas abaixo do tamanho dos itens quadrados.
+   Correcao: usar linhas com altura baseada no conteudo e compactar os espacamentos
+   e cabecalhos do painel em viewports com ate 480 px de altura.
+   Verificacao: em 728 x 318 px, as celulas mantem aproximadamente 73 px,
+   as linhas nao se sobrepoem e a grade mantem rolagem acessivel.
+
+9. Aproximacao de portas automaticas podia deixa-las fechadas no caminho
+   Causa: o raio de abertura era curto para a aproximacao pela rota do Bot.
+   Correcao: iniciar a abertura quando jogador ou inimigos estiverem a ate
+   tres tiles do centro da porta.
+   Verificacao: teste de regressao confirma que a porta inicia a abertura a
+   duas celulas e meia; simulacao manual atravessou uma porta automatica sem
+   bloqueio. A paralisia exata mostrada pelo usuario nao foi reproduzida.
+
+10. Drops de materiais tinham apenas um quadrado colorido
+   Correcao: os 37 materiais passaram a usar PNGs extraidos da imagem fornecida,
+   recortados pelos limites reais de cada objeto, com transparencia e proporcao
+   preservadas. Cada imagem tem no maximo 128 px no maior lado; no chao, o maior
+   lado continua limitado aos 16 px do drop.
+   Verificacao: teste confirma o carregamento de todos os arquivos, dimensoes,
+   transparencia nos cantos, exibicao pixelada no inventario e proporcao dos
+   drops no mapa.
+
+11. Memoria do Bot IA dependia de mapas aleatorios e nao consolidava vitorias
+   Causa: a memoria v2 identificava mapas pelo layout inteiro, gerando registros
+   sem reaproveitamento; a conclusao do andar final nao garantia a gravacao da
+   vitoria no fluxo do portal.
+   Correcao: memoria v3 substitui mapas por estatisticas agregadas por andar,
+   papel de sala e criatura. Registra inimigos, portais, armadilhas, dano e tempo
+   de limpeza, alem de tentativas, acertos, dano, armas e taticas por criatura.
+   Registra passos e revisitas durante a partida sem persistir coordenadas de
+   mapas gerados e prioriza salas ainda nao visitadas, usando a informacao do
+   portal.
+   Dicas agora refletem a arma de menor precisao, o andar de maior dano e a
+   criatura que mais causou dano direto. A migracao v2 preserva partidas,
+   vitorias, melhor andar e relatorios, descartando apenas mapas dependentes do
+   layout. O historico e limitado a 40 partidas e 80 relatorios, com limite de
+   512 KiB. Importacoes rejeitam JSON invalido, versoes ou campos incorretos,
+   estruturas invalidas e arquivos grandes, sem substituir dados validos.
+   A vitoria final atualiza e salva a memoria imediatamente antes da carta de
+   conclusao.
+   Verificacao: testes de migracao, importacao invalida, rota, dicas dinamicas
+   e conclusao do andar 20 passaram no harness.
+
+12. Icones do inventario tinham estilos e cores inconsistentes com a masmorra
+   Causa: equipamentos eram desenhos simplificados, enquanto pergaminhos,
+   moedas e materiais usavam sprites pixelados detalhados; os slots tinham
+   fundo rosa claro que destoava da arte escura do jogo.
+   Correcao: os icones de espada, lanca, arco, flechas, escudo, armadura e
+   cinco raridades de pocao usam sprites pixel-art individuais, recortados por
+   transparencia e sem deformacao.
+   O painel, os slots, os espacos vazios, a carteira, os detalhes e os estados
+   selecionados usam agora tons de pedra escura e bronze; pergaminhos, moedas e
+   materiais mantem seus sprites individuais com renderizacao pixelada.
+   Verificacao: teste automatizado cobre os recortes, proporcoes, transparencias,
+   raridades, renderizacao pixelada e paleta; inspecao visual confirmou o painel.
+
+13. Itens do inventario eram dificeis de identificar e o modo Dev nao tinha os drops
+   Causa: os equipamentos tinham silhuetas finas e abstratas, sem nomes visiveis;
+   o inventario Dev oferecia armas e pergaminhos, mas nao os materiais de todas as
+   criaturas, nem todas as moedas.
+   Correcao: equipamentos, flechas e pocoes agora usam os sprites extraidos da
+   imagem fornecida; nomes curtos agora
+   aparecem nos espacos de equipamento, pergaminhos e materiais, junto das
+   quantidades. O modo Dev monta os materiais a partir das tabelas reais de drops
+   do monstruario, confere que cada um existe no catalogo e adiciona 99 unidades
+   de cada um, moedas de todos os tipos, todas as raridades de pocao, flechas e
+   pergaminhos. Ao iniciar o modo Dev, o inventario abre automaticamente.
+   Flechas encontradas em drops podem ser guardadas mesmo antes da compra do arco;
+   o inventario identifica a munição armazenada e o disparo continua bloqueado
+   ate possuir o arco.
+   Verificacao: teste confirma a cobertura de todos os drops de criaturas e a
+   disponibilidade dos demais itens de teste; a inspecao visual confirmou nomes,
+   icones, quantidades e rolamento dos materiais no inventario.
+
+14. A camara secreta do andar 16 podia ficar inacessivel
+   Causa: o gerador exigia que a aproximacao da camara fosse um piso aberto, mas
+   nao confirmava que esse piso estava conectado ao restante do andar.
+   Correcao: candidatos a camara agora so sao aceitos se a aproximacao, a saida
+   e todos os inimigos continuarem alcancaveis.
+   Verificacao: o teste dos 20 mapas passou em tres execucoes completas
+   consecutivas, incluindo a abertura da camara secreta.
+
+VALIDACAO FINAL
+- Harness de regressao em tests/game-smoke.js, aberto com ?test=1:
+  65 testes; tres execucoes consecutivas com 65 aprovados, 0 falhos e 0
+  ignorados em cada uma.
+- O novO teste de fabricacao valida as 87 receitas, a correspondencia dos icones,
+  falta de ingredientes, consumo correto, armazenamento visual e retorno de
+  produtos que ja sao materiais.
+- O painel de fabricacao foi inspecionado aberto em desktop e em 390 x 844 px;
+  os 87 botoes aparecem com icones dos produtos e sem overflow horizontal na
+  viewport estreita.
+- O teste novo mantem uma regressao de baixa altura: verifica que as linhas das
+  celulas nao colidem e que o conteudo excedente continua rolavel.
+- O teste automatizado de overlay cobre a viewport e centraliza as mensagens
+  de vitoria e derrota.
+- Monstruario: 16 fichas completas, 16 linhas-resumo e 3 encontros especiais;
+  em celular, o conteudo extenso rola dentro do painel.
+- Inspecao visual final confirmou os estados de vitoria e derrota, o monstruario
+  no celular, a carta de conclusao do Bot e os novos recortes de equipamentos,
+  flechas e pocoes no inventario.
+- A busca estatica anterior nao encontrou referencias locais ausentes nem
+  indicadores de chamadas de rede, carregamento remoto, eval/Function,
+  document.write, WebSocket, service worker ou execucao de comandos. Resultados
+  de "prefetch" eram da pre-geracao local de mapas.
+- Nao foram observados erros JavaScript ou de console nos fluxos exercitados.
+- O runner integrado do VS Code nao descobriu testes para este projeto; a
+  validacao foi feita pelo harness do proprio jogo no navegador.
+- A memoria v3 inclui todas as criaturas declaradas no monstruario, incluindo
+  chefes; a conclusao do chefe final incrementa as estatisticas de vitoria,
+  derrotas de chefe e monstro e dano causado ao chefe.
+
+LIMITES
+- A inspecao visual de mapas foi amostral (andares 1, 10, 15 e 20), nao uma
+  captura manual de cada combinacao possivel de tela, item, resolucao e estado.
+- Testes automatizados e busca estatica nao provam ausencia de todo bug,
+  vulnerabilidade ou malware.
+- Nao houve varredura antimalware dedicada nem analise forense dos arquivos de
+  imagem/binarios. Para certificar arquivos contra virus, execute um antivirus
+  atualizado no computador onde o projeto sera utilizado.
+
+ARQUIVOS ALTERADOS
+- styles.css: ajustes responsivos, dimensoes dos dialogs e camadas visuais.
+- js/01-world-and-state.js: raio de abertura das portas, mapeamento de icones,
+  flechas armazenadas sem arco, fabricacao e acessibilidade da camara secreta.
+- js/03-world-rendering.js: renderizacao dos drops com sprites de materiais,
+  flechas e pocoes.
+- js/05-scenes-and-render-loop.js: correcao da transformacao do overlay.
+- js/02-combat.js: atribuicao de dano recebido e salvamento da vitoria final.
+- js/06-controls-and-startup.js: importacao da memoria, inventario Dev completo
+  e interacao de fabricacao.
+- js/00-crafting-data.js: catalogo local das 87 receitas da planilha.
+- assets/crafting-items/: 87 icones PNG 128 x 128 recortados da folha enviada.
+- js/07-bot-mode.js: memoria v3, migracao, agregacao e aprendizado da rota.
+- index.html: icones, nomes dos itens, receitas e inventario de produtos.
+- styles.css: estilo pixel-art, nomes visiveis e componentes da fabricacao.
+- tests/game-smoke.js: testes de portas, overlays, icones recortados,
+  memoria v3, inventario Dev e fabricacao.
+- assets/creature-materials/: 37 icones PNG de materiais, recortados por objeto.
+- assets/inventory-items/: icones PNG de equipamentos, flechas e pocoes.
+- assets/inventory-items/: sprites de equipamentos, flechas e pocoes recortados.
+- RELATORIO-VARREDURA.txt: este relatorio atualizado.
+
+ATUALIZACAO DO INVENTARIO, MONSTRUARIO E LORE
+- O inventario de materiais agora inclui, no tooltip acessivel por mouse e foco,
+  as criaturas que podem deixar cada material, a chance do drop e a quantidade
+  por ocorrencia. A origem e derivada diretamente da tabela de combate; materiais
+  sem fonte de criatura informam que podem vir de fabricacao.
+- As 16 fichas jogaveis do monstruario agora mostram a tabela real de drops,
+  com chance e quantidade, alem de atributos-base, resistencias, ataques
+  cadastrados e andares de aparicao derivados dos dados de combate.
+- A tela inicial ganhou uma cronica expansivel sobre as minas, a coroa, o
+  castelo e a expedicao, sem aumentar permanentemente o bloco principal do lobby.
+- As tres propostas de mobs foram ativadas: morcego do veio (1–4), lagarto de
+  basalto (5–9) e escriba sem rosto (10–14), cada qual com dados de combate,
+  spawn, drops cadastrados, comportamento telegráfico e sprite pixel art.
+- Lia, Oren e Nara agora aparecem em andares seguros e podem ser abordados com
+  G. Lia troca mapa rabiscado ou cobre por uma pista direcional; Oren oferece
+  cura ou defesa por sucata e cobre; Nara propõe esquivar de três ataques
+  anunciados em troca de 5 cobres. As interações são opcionais e não bloqueiam
+  a saída.
+- O harness verifica fichas e tabelas de drop, correspondência entre fontes
+  do inventário e dados de combate, a agenda e mecânicas das novas entidades e
+  a crônica inicial.
+- Validação final no navegador: 71 testes aprovados, 0 falhos. A geração foi
+  conferida em 24 gerações aleatórias distribuídas pelos oito andares de NPC;
+  os personagens ficaram acessíveis e mantiveram ao menos 37 px dos inimigos
+  nesses mapas. A pista de Lia segue a rota caminhável até a saída. Também foram
+  exercitados os dois pagamentos de Lia, os serviços de Oren, a recompensa de
+  Nara, os três avisos de ataque e a interrupção do glifo do Escriba. Os novos
+  sprites e o aviso de interação foram inspecionados visualmente no Canvas.
+
+ARQUIVOS DESTA ATUALIZACAO
+- index.html e LEIA-ME.txt: controles de interação contextual com personagens.
+- js/00-bestiary-data.js: atributos, ataques, resistências, drops e spawns dos
+  três novos mobs.
+- js/01-world-and-state.js: geração segura dos NPCs, pista por rota, serviços
+  e desafio de Nara.
+- js/02-combat.js: avisos, resolução dos ataques, esquiva e interrupção do glifo.
+- js/04-character-rendering.js e js/05-scenes-and-render-loop.js: sprites,
+  avisos de ataque e renderização por profundidade.
+- js/06-controls-and-startup.js: tecla G e escolhas de interação.
+- js/08-monstruario.js: fichas mecânicas e descrições dos seis conteúdos ativos.
+- tests/game-smoke.js: regressão dos dados, spawns, drops, sprites e agenda.
+
+ATUALIZACAO VISUAL DOS MAPAS EXISTENTES
+- Foram adicionados 20 perfis cromaticos deterministas, um por andar, em ordem
+  dos temas da mina recente as ruinas, cisternas quentes, saloes do castelo,
+  areas arcanas e sala do trono corrompida.
+- Os perfis alteram apenas a renderizacao: tonalidade do piso, das paredes,
+  tapetes e vitrais; brilho e alcance visual das tochas; luz ambiente; poeira;
+  e as cores existentes da agua das galerias. Os perfis nao alteram a geometria
+  dos mapas nem as portas, salas, escadas, baus ou inimigos.
+- A agua continua nos pontos gerados originalmente e conserva a mesma regra
+  de movimentacao; nao foram criados novos perigos de lava ou vapor.
+- Inspecao visual no navegador: andares 1, 5, 10, 15 e 20. A verificacao de
+  regressao percorreu os 20 perfis e os 20 mapas continuaram com rotas validas.
+  Resultado final do harness: 66 testes aprovados, 0 falhos, 0 ignorados.
+- Atualizacao dos props ambientais: foram desenhados em pixel art nativo do
+  Canvas, alinhados ao contorno, escala e paleta das paredes e pisos. Minas:
+  escoras, vagonetes, ferramentas, poças, pedregulhos e teias.
+  Cisternas: canos, grades, respiros e fuligem; a fissura luminosa agora e
+  um detalhe raro, ampliado e pixelado do piso (area de dois blocos), nao um
+  prop ambiental. Castelo:
+  props tematicos por andar, incluindo beliches, estantes, racks, altar,
+  laboratorio, tesouro, correntes, selos, barreiras, cristais e trono.
+- Substituicao visual dos props das minas pelos sprites correspondentes da
+  folha fornecida: escora, vagonete, picareta, pa, lanterna, poça,
+  pedregulhos e teia com aranha. Os recortes removem o quadriculado do fundo,
+  preservam transparencia e sao mantidos em `assets/environmental/`.
+- A segunda folha de sprites foi integrada aos andares 5-9: tubulacao, grade
+  metalica, saida de vapor, fenda de lava e monte de fuligem. A fenda foi
+  posteriormente removida como sprite e substituida por detalhe procedural
+  desenhado na camada do piso; os demais recortes seguem em
+  `assets/environmental/`.
+- Os nove arquivos PNG das minas foram carregados e inspecionados no navegador;
+  cada um aparece no andar tematico correspondente e preserva transparencia.
+  Os andares 1-4 exibiram os nove tipos distintos.
+- As pecas sao deterministicamente posicionadas junto a paredes. Nao mudam a
+  matriz do mapa. Apos o ajuste de hitboxes, objetos fisicamente solidos tem
+  caixas proporcionais a sua silhueta e bloqueiam inimigos, mas nao o jogador; os
+  elementos decorativos de piso/atmosfera continuam atravessaveis. Lava
+  desenhada nao causa dano. Continuam faltando arquivos de audio ambiente.
+- A escala de cada prop agora declara largura e altura em blocos: pequenos
+  ocupam um, a maioria dos moveis e props grandes ocupa dois e pecas monumentais
+  chegam a tres. A arte preserva espaco negativo, sem precisar preencher o
+  limite; o redimensionamento mantem a amostragem pixelada sem suavizacao.
+- A renderizacao das pecas foi inspecionada no navegador nos andares 12 e 19;
+  as folhas da mina e da cisterna foram carregadas e conferidas nos andares
+  1 e 5. Os 20 andares geraram props validos, e o harness terminou com 68
+  testes aprovados e nenhum falho apos os dois conjuntos de sprites.
+- Hitboxes: adicionados formatos por objeto para escoras, vagonetes, ferramentas,
+  lanternas, pedregulhos, tubulacao e bases de respiro; elementos vazados ou
+  no chao permanecem atravessaveis. Spawns e navegacao verificam as caixas,
+  e a regressao garante caminhos ate a saida e inimigos em todos os andares.
+- Ajuste final: hitboxes que chegam as bordas do mapa sao limitadas ao espaco
+  jogavel, sem caixas fora dos limites. Um teste dedicado confirma a colisao
+  dos props solidos e a passagem sobre os elementos decorativos; a regressao
+  final passou com 69 testes, 0 falhos e 0 ignorados, incluindo saidas e
+  inimigos alcancaveis nos 20 andares.
+- Ajuste visual da escora: postes e travessa agora acompanham a escala e a
+  posicao do sprite fornecido, mantendo livre o vao central. O teste verifica
+  os limites das tres caixas e confirma que o vao nao bloqueia movimento.
+- Hitboxes ambientais: o jogador atravessa os props; as criaturas continuam
+  colidindo com os solidos. A geracao posiciona cada prop fora de paredes,
+  baus, barris e outros props, e testa essas regras e a passagem do jogador.
+- Substituicao dos sprites de mina pelos recortes da nova folha enviada:
+  escora, vagonete, picareta, pa, lanterna, pocoa, pedregulhos e teia.
+  Os PNGs mantem transparencia.
+- Arquivos alterados: js/03a-floor-rendering.js, js/03b-wall-rendering.js,
+  js/03-world-rendering.js, js/01-world-and-state.js, tests/game-smoke.js,
+  LEIA-ME.txt e RELATORIO-VARREDURA.txt; adicionados nove PNG em
+  assets/environmental/.
+
+REVALIDACAO DA GERACAO LOGICA DOS PROPS
+- Apos a orientacao vertical e as caixas de footprint correspondentes,
+  o harness integrado passou novamente: 69 testes aprovados, 0 falhos.
+- A varredura dos 20 andares confirmou que os tipos ambientais previstos
+  continuam presentes, as salas tematicas respeitam seus papeis, as posicoes
+  sao deterministicas e as hitboxes nao sobrepoem paredes ou itens. As rotas
+  para saidas e inimigos permanecem acessiveis.
+- A regressao encontrou uma interacao no andar 16: a câmara secreta podia
+  erguer sua parede sobre um prop, porque a reserva original nao considerava
+  as hitboxes ambientais. A selecao agora prioriza espacos sem props e, quando
+  precisa deslocar algum, encontra um novo local compativel fora da câmara.
+- Verificacao direta apos a correcao: os 10 props do andar 16 continuam
+  presentes, todos os tipos previstos foram mantidos e nenhum footprint cruza
+  a câmara secreta. O harness tambem confirmou que a abertura da câmara nao
+  deixa props sobre paredes.
+- A analise de problemas do editor nao apontou erros nos arquivos JavaScript
+  alterados. Isso nao equivale a uma certificacao antimalware; nao foi
+  executado um antivírus dedicado.
+- Documentacao e regressao atualizadas em LEIA-ME.txt e tests/game-smoke.js.
+
+AJUSTE DE LANTERNAS, ESCORAS E ORIENTACAO
+- As lanternas da mina foram reduzidas para footprint de 1 x 1 bloco. Em cada
+  andar 1-4, uma lanterna substitui uma tocha de parede escolhida pela geracao;
+  as demais tochas e fontes de luz continuam ativas.
+- Nos trechos horizontais, duas escoras em pe ficam lado a lado ao longo do
+  corredor; nos verticais, uma escora atravessa a largura. Os apoios encostam
+  nas paredes opostas e o vao central continua livre.
+- A geracao limita a dois o total de props em cada sala. Os vagonetes ficam
+  dentro das salas para nao bloquear a passagem pelos corredores.
+- Todos os tipos de prop oferecem orientacao horizontal e rotacao de 90 graus.
+  A geracao prioriza o alinhamento de parede, corredor ou abertura, usando
+  a orientacao alternativa quando ela se encaixa melhor no espaco livre; a
+  renderizacao e as hitboxes usam o mesmo footprint orientado.
+- Regressao visual e logica: footprint da lanterna, substituicao de tocha,
+  escoras nas transicoes, rotacao e acessibilidade foram reforcados.
+- Verificacao final: 69 testes aprovados, 0 falhos; nenhum erro do editor nos
+  quatro arquivos JavaScript/testes alterados. Inspecao visual no navegador
+  confirmou a cena jogavel do andar 1 com os novos props.
+- Ajuste solicitado: agora e gerada uma escora em cada trecho reto de
+  corredor detectado, atravessando a largura entre as paredes opostas. As
+  escoras sao deterministicamente posicionadas e o sprite fica recortado no
+  footprint para que os postes encostem visualmente no limite das paredes.
+- Refinamento: corredores horizontais recebem duas escoras em pe; corredores
+  verticais mantem uma escora na largura.
+  Nenhuma sala recebe mais de dois props.
+- Interacao ambiental: duas tochas dos andares 1-4 sao substituidas por
+  lampioes. Carrinhos bloqueiam o jogador e podem ser quebrados com espada
+  ou lanca, deixando cair uma unidade de fuligem mineral.
+- Validacao: harness no navegador com 70 aprovados, 0 falhos e 0 ignorados.
+  Em outras 80 geracoes (20 sementes por andar nos pisos 1-4), foram detectados
+  442 trechos elegiveis e geradas 695 escoras, na quantidade esperada por eixo,
+  sem lacunas. As 80 geracoes tambem substituem duas tochas por lanternas
+  cada, preservam o caminho ate a saida e posicionam os 80 carrinhos dentro
+  de salas; todas as decoracoes ficam livres de paredes e outros props, ha no
+  maximo dois props por sala. Testes de interacao confirmam que carrinhos bloqueiam o jogador,
+  mas podem ser quebrados por espada ou lanca para deixar fuligem mineral.
+  A verificacao visual no andar 1 confirmou os lampioes e carrinhos no mapa.
+
+REFINAMENTO VISUAL DE INIMIGOS E NPCS
+- Aumentados os detalhes em pixel art do Escriba sem rosto, Morcego do veio
+  e Lagarto de basalto, com dobras, glifos, marcas de placas, olhos e contornos
+  internos de asas.
+- Adicionados detalhes de coleira, pelo e brasa ao Cao de cinzas e realce
+  prismatico ao Sentinela de vitral.
+- Lia, Oren e Nara receberam detalhes adicionais em roupa, acessórios, barba,
+  livro, ferramenta e lanterna para reforçar a leitura e a identidade de cada um.
+- Inspecao visual no navegador confirmou os NPCs em cena, sem sobreposicao
+  com a HUD. Harness integrado: 71 testes aprovados, 0 falhos.
+
+REFORMULACAO DOS INIMIGOS E CORRECAO DO MODO DEV
+- Contraste e saturacao dos sprites de criaturas e chefes foram reforcados
+  globalmente; o suavizamento de imagem continua desativado para preservar
+  bordas pixeladas nitidas.
+- Goblin das galerias e Goblin corredor agora têm leitura mais distinta:
+  elmo e placas de mineracao no primeiro; capuz, faixa escarlate longa e
+  equipamento leve de corrida no segundo.
+- As tres aranhas receberam paletas, padroes de carapaca, olhos e silhuetas
+  diferentes: tons de quitina para as galerias, fuligem escura com fissuras
+  incandescentes e placas douradas/rúnicas para a Matriarca.
+- Os demais sprites tambem receberam contraste global reforcado; o harness
+  desenha os 16 tipos para detectar falhas no caminho visual de cada sprite.
+- Corrigida a classificacao de chefe: a busca por "boss" no texto da categoria
+  confundia "arachnid-miniboss" com chefe. Agora apenas categorias terminadas
+  em "-boss" usam o desenho de boss; a Matriarca mantém sprite e estado proprios.
+- Regressao especifica: Matriarca Dev nao e chefe nem recebe bossType; Golem
+  de lava continua inicializando como chefe.
+- Validacao final: 72 testes aprovados, 0 falhos; inspecao de galeria dos
+  16 tipos confirmou a identidade visual e o maior contraste.
+
+REORGANIZACAO INTERNA DO MONSTRUARIO
+- Conteudo agora separado por filtros de criaturas, encontros, aliados e
+  tabela-resumo; busca abrange nomes, regioes, ataques e detalhes das fichas.
+- Abertura reorganizada em registro de campo, indicadores de regiao e catalogo
+  agrupado; a busca informa os resultados e funciona com teclado e leitor de tela.
+- Layout responsivo ajusta navegacao, texto e campos das fichas para telas
+  estreitas sem remover dados.
+- Validacao: 72 testes aprovados, 0 falhos; busca e filtro de fichas testados,
+  com inspecao visual em desktop e celular.
+
+VARREDURA ADICIONAL DE JOGABILIDADE E ERROS - 02/11/2026
+- Reexecucao do harness integrado: 72 testes aprovados, 0 falhos e 0 pulados.
+- Verificacao interativa: inicio da partida, combate em tempo real, movimento,
+  ataque e abertura/fechamento do inventario por teclado; nenhum erro de
+  JavaScript ou de console foi observado durante a sessao.
+- Geracao aleatoria exercitada em 60 inicializacoes, tres por andar do 1 ao 20.
+  Todas terminaram sem erro; nenhum jogador surgiu sobre um inimigo, e a menor
+  distancia observada entre jogador e inimigo vivo foi de dois tiles.
+- A cobertura automatizada existente tambem verifica conectividade e saida
+  dos 20 andares, alcance dos inimigos, chefes, combate, drops, inventario,
+  receitas, loja, progressao, memoria do Bot, controles, renderizacao e HUD.
+- Nenhum novo defeito reproduzivel foi encontrado nesta rodada; por isso,
+  nao foram feitas alteracoes de codigo sem evidencia de bug.
+- Limitacoes: Node.js nao esta instalado neste ambiente, entao nao foi possivel
+  executar `node --check`; os scripts foram carregados e exercitados pelo
+  proprio navegador e pelo harness. Naquela rodada nao havia verificador
+  antimalware dedicado; ele foi adicionado e executado estaticamente abaixo.
+
+VERIFICADOR LOCAL E INTEGRACAO COM MICROSOFT DEFENDER - 02/11/2026
+- Adicionado verificar-malware.ps1: revisa codigo por execucao dinamica,
+  escrita dinamica no documento e carregamentos/requisicoes a revisar; confere
+  referencias remotas em HTML/CSS e existencia/limites de recursos locais.
+- Sem alertas estaticos, o script pode solicitar uma varredura personalizada
+  do diretorio pelo cmdlet oficial Start-MpScan. Ele nao remove arquivos nem
+  altera configuracoes do antivírus, e orienta consultar o Historico de protecao.
+- A auditoria estatica foi executada: 16 arquivos de codigo verificados, sem
+  padroes sinalizados e sem recursos locais ausentes.
+- Neste computador, Get-MpComputerStatus informou AntivirusEnabled=False.
+  Por seguranca, a varredura personalizada nao foi iniciada; o script encerra
+  com aviso explicito quando o Defender nao esta ativo.
+- O jogo no navegador nao recebe protecao antimalware embutida; a varredura
+  real depende do Microsoft Defender ativo no Windows. Esta ferramenta nao
+  e um antivirus independente nem substitui protecao em tempo real.
+
+ESTABILIZACAO DO HARNESS E AUDITORIA DE BASE - CONTINUACAO
+- Arquitetura: jogo web local/offline em Canvas 2D, sem engine externa; estado,
+  combate e mundo ficam nos scripts numerados de js/, com renderizadores,
+  controles, dados de criaturas/receitas e modo Bot separados por arquivo.
+  index.html e styles.css fornecem inicializacao e interface. Os scripts
+  principais ainda concentram muitas responsabilidades, o que aumenta o risco
+  de regressao em mudancas transversais.
+- Conteudo auditado anteriormente: 20 andares, 16 criaturas (incluindo 4
+  chefes), 37 materiais e 87 receitas; a integridade de drops, materiais e
+  receitas agora tambem tem uma verificacao automatizada no harness.
+- Persistencia: nao foi identificado save de partida completa. O armazenamento
+  local cobre memoria do Bot, descobertas do Monstruario, estado do Ferreiro e
+  preferencia de efeitos. Nao ha migracao de progresso de partida a acrescentar
+  sem primeiro definir um formato de save; preservar esses dados locais e
+  necessario em qualquer trabalho futuro.
+- Priorizacao desta auditoria: alta - obter uma medicao reproduzivel de
+  desempenho em primeiro plano antes de otimizar; media - manter testes
+  deterministas para geracao aleatoria e relacoes entre catalogos; baixa -
+  dividir responsabilidades dos scripts somente quando uma mudanca funcional
+  justificar, evitando uma refatoracao ampla sem beneficio medido.
+- Nao foi reproduzido nesta rodada defeito funcional de combate, economia,
+  progressao ou persistencia. A validacao abaixo cobre regressao automatizada,
+  nao certifica todas as combinacoes de jogo ou dispositivos.
+- O fixture do teste de golpe especial em area agora isola paredes, baus,
+  barris e decoracoes aleatorias e restaura os dados originais ao terminar.
+  Isso evita que obstaculos de um mapa aleatorio alterem o resultado do teste.
+- Adicionado teste de integridade do catalogo de materiais: IDs unicos,
+  descricoes preenchidas, todos os drops apontando para materiais cadastrados,
+  todos os materiais com fonte de drop e uso em receita.
+- Validacao pelo navegador em index.html?test=1: duas execucoes completas com
+  78 testes aprovados, 0 falhos e 0 ignorados em cada execucao.
+- A medicao de FPS nesta sessao nao e um baseline confiavel: embora a partida
+  estivesse ativa e o canvas renderizado, o documento reportou
+  document.visibilityState = hidden. Amostras de FPS feitas em aba oculta nao
+  devem orientar otimizacoes. Nenhuma otimizacao de desempenho foi aplicada
+  sem uma medicao reproduzivel em primeiro plano.
+- Prioridades de continuidade: (1) repetir a medicao em aba visivel e cenarios
+  comparaveis antes de otimizar; (2) manter os fixtures de testes aleatorios
+  deterministas; (3) seguir validando os dados relacionados por testes, sem
+  alterar conteudo ou balanceamento sem defeito reproduzido.
+- Escopo desta continuacao: testes e relatorio; nenhuma mecanica, dado de jogo,
+  inventario, economia ou formato de persistencia foi alterado.
+
+OTIMIZACOES DE RENDERIZACAO E ATUALIZACAO - 04/11/2026
+- A lista ordenada de desenho agora descarta inimigos/NPCs fora da camera antes
+  da ordenacao, em qualquer quantidade. Avisos de ataque ativos continuam na
+  lista mesmo fora da camera; a ordem de profundidade dos elementos desenhados
+  permanece a mesma.
+- A limpeza de inimigos expirados passou de `filter()` a compactacao estavel
+  da lista existente. Evita alocacao de um novo array a cada atualizacao e
+  preserva ordem, referencia da lista, animacoes de morte e atualizacao do
+  progresso quando um inimigo e removido.
+- Detalhes estaticos de tubos e parafusos dos esgotos agora reutilizam tabelas
+  compartilhadas; os tempos de animacao comuns sao calculados uma vez por
+  quadro, em vez de uma vez por objeto.
+- A cor base da sombra da iluminacao agora e formatada uma vez por quadro,
+  nao uma vez por celula desenhada.
+- Medicao manual em pagina visivel: 80 chamadas de `draw()` apos 8 chamadas de
+  aquecimento, com 206 inimigos sinteticos (200 fora da tela), resultaram em
+  2,18 ms/quadro na versao atual; a amostra de referencia anterior foi 6,59
+  ms/quadro. O mapa e a quantidade de inimigos originais diferiram entre as
+  sessoes, portanto a comparacao e indicativa, nao um A/B controlado. Em uma
+  cena atual com um inimigo original, a amostra normal foi 1,59 ms/quadro.
+  Cinco esgotos visiveis foram desenhados 100 vezes a media de 0,14 ms por
+  chamada. Esses tempos medem apenas JavaScript de `draw()`, nao GPU,
+  composicao do navegador ou FPS final.
+- Harness `index.html?test=1`: duas execucoes com 79 aprovados, 0 falhos e 0
+  ignorados em cada uma. Inclui regressao para culling em populacao abaixo de
+  80, preservacao de avisos de ataque e compactacao da lista de inimigos.
+- Nao foram removidos efeitos, reduzida qualidade visual ou alterado
+  balanceamento. Mais ganhos em renderizacao de inimigos exigiriam cache de
+  sprites/efeitos dinamicos; nao foi adotada essa mudanca de maior risco visual
+  sem perfil controlado por tipo de criatura.
+
+OTIMIZACAO DE FPS E DO BOT - 04/11/2026
+- O loop do Bot em 2x/4x/10x agora conserva todas as subetapas de fisica e
+  combate, mas agrega o tempo simulado e avalia a decisao da IA uma vez por
+  quadro desenhado. Isso remove chamadas e busca de caminho redundantes sem
+  aumentar o passo de colisao/movimento dos atores.
+- A busca de caminho do Bot mantem a grade, os vizinhos e a ordem de custos,
+  mas usa buffers tipados reutilizaveis para custos/visitados e uma tabela
+  imutavel de vizinhos; portas sao indexadas uma vez por busca em vez de
+  varridas novamente para cada posicao.
+- Perfil anterior, Bot 10x, piso 11 e 16 inimigos: 35 quadros em 5 s; 350
+  chamadas de updateBot em 350 subetapas de simulacao; updateBot acumulou
+  1.272,9 ms e o desenho 155,4 ms. Apos a mudanca, Bot 10x no piso 1: 41
+  quadros em 2 s; 41 chamadas de updateBot para 410 subetapas; updateBot
+  acumulou 128,1 ms e o desenho 119,5 ms. O perfil do segundo trecho terminou
+  em quadro de jogo ativo, com tres inimigos. A cena e diferente, portanto a
+  comparacao nao e A/B controlado; a reducao de chamadas foi verificada
+  diretamente, e o FPS observado nao deve ser generalizado a outros PCs.
+- Outra amostra de RAF em 1x/aba marcada visivel oscilou em torno de 16 FPS,
+  embora os blocos instrumentados de update e draw ocupassem poucos
+  milissegundos. A discrepancia sugere limitacao de compositor/ambiente do
+  navegador compartilhado; nao atribuir a amostra so ao codigo do jogo.
+- O harness `index.html?test=1` foi executado duas vezes apos estas alteracoes:
+  80 testes aprovados, 0 falhos, 0 ignorados em cada rodada. A auditoria
+  estatica verificou 18 arquivos de codigo, sem padroes sinalizados ou recursos
+  locais ausentes.
+- Nao foi criado um segundo motor nem migrado para WebGL/Worker: a evidencia
+  aponta para trabalho redundante da IA em modo acelerado, nao para um limite
+  comprovado do Canvas. Uma reescrita do motor teria alto risco e nao resolveria
+  o custo de simular dez passos de fisica por quadro.
+- Para a queixa de animacao lenta, o relogio visual de jogador, inimigos e
+  animacao de sprite dos dragoes usa um multiplicador configuravel de 1,6x em
+  `GAME_BALANCE.visual.actorAnimationSpeedMultiplier`. Movimento, fisica,
+  ataques e recargas continuam usando o delta original. O harness passou com
+  81 testes aprovados e nenhum falho apos a mudanca.

@@ -1,0 +1,47 @@
+Olá!
+
+Concluí os 20 andares da masmorra e derrotei o chefe final.
+
+Desempenho: 93/100 · 250 inimigos comuns derrotados · 4 chefes derrotados.
+
+COMBATE
+Espada: 182/239 acertos (76%), 8493 de dano · Lança: 53/58 (91%), 2833 de dano · Arco: 576/775 (74%), 7625 de dano
+Defesa: 150 golpes bloqueados · escudo absorveu 932 de dano.
+Dano recebido: 324 no total · média de 9,3% da vida máxima de cada andar · dificuldade observada: Muito alta.
+Maior dano proporcional no andar 5 (84% da vida máxima).
+
+ECONOMIA
+Moedas obtidas: 2.450 cobres · compras: 2.335 cobres · saldo final: 115 cobres.
+
+PROGRESSO E DANO POR ANDAR
+Andares concluídos: 20/20 · 250 inimigos comuns derrotados.
+Dano recebido (apenas andares com dano):
+Andar 5: 109 dano recebido (84% da vida máxima).
+Andar 15 · Laboratório e observatório arcano: 166 dano recebido (81% da vida máxima).
+Andar 20 · Sala do trono: 49 dano recebido (20% da vida máxima).
+
+EXPLORAÇÃO E RETORNOS
+3361 passos de rota · 2034 posições únicas · 1327 revisitas (39% dos passos).
+
+DESAFIOS ESPECÍFICOS DOS MONSTROS
+Goblins derrotados: 52. Alguns usam escudo ou armadura; flanqueie o escudo e use o dash com ataque para quebrar a defesa.
+Aranhas derrotados: 13. Teias podem prender por 1,5 s e o salto encurta distância; mantenha espaço e elimine-as com ataques à distância.
+Trolls derrotados: 72. O veneno causa dano gradual e o troll recua depois de envenenar; use arco ou lança para continuar pressionando à distância.
+Ogros derrotados: 113. O golpe em área causa dano dobrado; saia do raio durante o aviso de 0,65 s antes do impacto.
+
+MODIFICAÇÕES ÚTEIS
+Reforce poções, armadura e escudo antes do andar 5, onde o dano proporcional foi maior.
+Reduza retornos no mapa: 39% dos passos registrados revisitaram posições já percorridas.
+
+CHEFES
+Dragão: 2 derrotado(s), 1098 de dano causado
+Golem de lava: 1 derrotado(s), 427 de dano causado
+Ceifador: 1 derrotado(s), 695 de dano causado
+Chefes anteriores ao final têm 50% a mais de vida e velocidade, com dano escalonado pelo andar; o chefe final usa 1,9 vez o multiplicador de chefe. Todos antecipam os movimentos e se reposicionam com mais frequência que inimigos comuns.
+
+MELHORIAS AO CONCLUIR
+Espada nível 30 (98 de dano) · armadura nível 9 (27 de defesa) · escudo nível 11 (250/250 de durabilidade) · arco comprado · lança comprada · dash ampliado sim
+Poções restantes: 2 · vida final: 196/240.
+
+Até a próxima aventura,
+Bot IA
